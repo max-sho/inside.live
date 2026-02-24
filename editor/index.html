@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Inside Editor v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--panel:#111;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--dim:#777;--accent:#ff4d00;--accent-dim:rgba(255,77,0,.15);--center-bg:#0a0a0a}
+:root.light{--panel:#f5f5f5;--surface:#fff;--border:#ddd;--text:#1a1a1a;--dim:#888;--accent:#e04400;--accent-dim:rgba(255,77,0,.1);--center-bg:#e8e8e8}
+.theme-toggle{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--dim);cursor:pointer;padding:4px 8px;font-size:12px;display:flex;align-items:center;gap:4px;transition:all .2s ease}
+.theme-toggle:hover{color:var(--text);border-color:var(--accent)}
+html,body{height:100%;overflow:hidden;background:var(--panel);color:var(--text);font-family:'Inter',sans-serif;font-size:12px}
+.editor{display:grid;grid-template-columns:280px 1fr 300px;grid-template-rows:48px 1fr;height:100vh}
+.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:10}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-logo{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;opacity:.5}
+.topbar-sep{width:1px;height:20px;background:var(--border)}
+.device-sel{display:flex;gap:3px}
+.dbtn{padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);font:inherit;font-size:9px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1.3}
+.dbtn:hover{border-color:#444;color:var(--text)}.dbtn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.dbtn .dm{opacity:.5;font-size:8px}
+.topbar-center{display:flex;align-items:center;gap:6px}
+.mbtn{padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--dim);font:inherit;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.mbtn:hover{border-color:#444;color:var(--text)}.mbtn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.abtn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--dim);font:inherit;font-size:10px;cursor:pointer;transition:all .15s}
+.abtn:hover{border-color:#444;color:var(--text)}.abtn.primary{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.abtn.done{border-color:#4a4;color:#4a4;background:rgba(68,170,68,.1)}
+.panel-left,.panel-right{background:var(--panel);overflow-y:auto;padding-bottom:20px}
+.panel-left{border-right:1px solid var(--border)}.panel-right{border-left:1px solid var(--border)}
+.panel-left::-webkit-scrollbar,.panel-right::-webkit-scrollbar{width:4px}
+.panel-left::-webkit-scrollbar-thumb,.panel-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.center{display:flex;align-items:center;justify-content:center;background:var(--center-bg);position:relative;overflow:hidden;flex-direction:column}
+/* Device frame: SVG overlay on TOP of iframe (mask approach) */
+.device-frame{position:relative;transform-origin:top center;overflow:hidden}
+.device-frame .device-svg{display:block;width:100%;height:100%;pointer-events:none;position:relative;z-index:3}
+.device-frame iframe{position:absolute;border:none;transform-origin:top left;z-index:1}
+
+.scale-bar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%)}
+.scale-bar label{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px;white-space:nowrap;opacity:.4}
+.sec{border-bottom:1px solid var(--border)}.sec-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none}
+.sec-head:hover{background:var(--accent-dim)}.sec-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim)}
+.sec.open>.sec-head .sec-title{color:var(--text)}.sec-arrow{font-size:9px;color:var(--dim);transition:transform .2s}.sec.open>.sec-head .sec-arrow{transform:rotate(90deg)}
+.sec-body{display:none;padding:6px 14px 12px}.sec.open>.sec-body{display:block}
+.sub-label{font-size:8px;letter-spacing:2px;color:var(--dim);opacity:.5;margin:8px 0 2px;text-transform:uppercase}
+.hint{font-size:9px;color:var(--dim);opacity:.6;margin-top:2px;line-height:1.3}
+.fx-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}.fx-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.fx-label{font-size:10px;letter-spacing:1px;color:var(--dim);min-width:50px;flex-shrink:0;padding-top:2px}
+.tog{width:28px;height:16px;border-radius:8px;background:var(--border);position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;margin-top:2px}
+.tog.on{background:rgba(255,77,0,.4)}.tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--dim);transition:all .2s}.tog.on::after{left:14px;background:#fff}
+.fx-sliders{flex:1;min-width:0}.fx-sliders.disabled{opacity:.2;pointer-events:none}
+.ctrl{margin-bottom:4px}.ctrl:last-child{margin-bottom:0}
+.ctrl label{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-bottom:1px}
+.ctrl label span{opacity:.8;font-variant-numeric:tabular-nums;font-family:'Space Mono',monospace;font-size:9px}
+input[type="range"]{-webkit-appearance:none;width:100%;height:2px;background:var(--border);border-radius:2px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:pointer}
+.field{margin-bottom:8px}.field label{display:block;font-size:9px;letter-spacing:1px;color:var(--dim);margin-bottom:3px;text-transform:uppercase}
+.field input,.field textarea,.field select{width:100%;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:11px;outline:none}
+.field input:focus,.field textarea:focus{border-color:#444}.field textarea{resize:vertical;min-height:40px}
+.field select{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:10px;padding-right:24px}
+.color-row{display:flex;align-items:center;gap:8px}.color-pick{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);cursor:pointer;overflow:hidden;flex-shrink:0;padding:0;background:transparent}
+.color-pick input[type="color"]{width:48px;height:48px;border:none;cursor:pointer;transform:translate(-8px,-8px)}
+.dropzone{border:2px dashed var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:6px;position:relative}
+.dropzone:hover{border-color:var(--dim);background:var(--accent-dim)}.dropzone.active{border-color:var(--accent);background:var(--accent-dim)}.dropzone.loaded{border-style:solid;border-color:var(--border)}
+.dropzone-label{font-size:10px;color:var(--dim)}.dropzone-file{font-size:10px;color:var(--accent);margin-top:2px;word-break:break-all}
+.dropzone input[type="file"]{display:none}
+.dropzone-rm{position:absolute;top:4px;right:4px;width:18px;height:18px;border:none;background:rgba(255,0,0,.15);color:#f66;border-radius:50%;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}.dropzone.loaded .dropzone-rm{display:flex}
+.asset-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.asset-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:10px}
+.asset-item .name{flex:1;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.asset-item .idx{color:var(--dim);font-family:'Space Mono',monospace;font-size:8px}
+.asset-item .rm{border:none;background:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0 2px}.asset-item .rm:hover{color:#f44}.asset-item.active{border-color:var(--accent)}
+.past-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.past-row:last-child{border-bottom:none}
+.past-thumb{width:36px;height:48px;border-radius:4px;background:var(--surface);overflow:hidden;flex-shrink:0;cursor:pointer}.past-thumb img{width:100%;height:100%;object-fit:cover}
+.past-info{flex:1;min-width:0}.past-info input{width:100%;padding:3px 5px;background:transparent;border:1px solid transparent;border-radius:3px;color:var(--text);font:inherit;font-size:10px;outline:none}.past-info input:focus{border-color:var(--border);background:var(--surface)}
+.past-rm{width:20px;height:20px;border:none;background:transparent;color:var(--dim);cursor:pointer;font-size:14px;flex-shrink:0}.past-rm:hover{color:#f44}
+.add-btn{width:100%;padding:6px;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--dim);font:inherit;font-size:10px;cursor:pointer}.add-btn:hover{border-color:#444;color:var(--text)}
+.trigger-btn{width:100%;padding:8px;border:1px solid var(--accent);border-radius:6px;background:var(--accent-dim);color:var(--accent);font:inherit;font-size:10px;font-weight:600;cursor:pointer;margin-top:6px;letter-spacing:1px;text-transform:uppercase}.trigger-btn:hover{background:rgba(255,77,0,.25)}
+/* Presets */
+.preset-row{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
+.preset-chip{padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);font:inherit;font-size:9px;cursor:pointer;position:relative}
+.preset-chip:hover{border-color:#444;color:var(--text)}.preset-chip.active{border-color:var(--accent);color:var(--accent)}
+.preset-chip .x{margin-left:4px;color:#666;font-size:10px}.preset-chip .x:hover{color:#f44}
+</style>
+</head>
+<body>
+<div class="editor">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-logo">inside editor</div><div class="topbar-sep"></div>
+      <div class="device-sel" id="deviceSel">
+        <button class="dbtn active" data-device="iphone15">iPhone 15 Pro Max<br><span class="dm">430×932</span></button>
+        <button class="dbtn" data-device="iphone13">iPhone 13 Pro Max<br><span class="dm">428×926</span></button>
+        <button class="dbtn" data-device="pixel">Pixel 7 Pro<br><span class="dm">480×1040</span></button>
+        <button class="dbtn" data-device="ipad">iPad Air<br><span class="dm">820×1180</span></button>
+      </div></div>
+    <div class="topbar-center">
+      <button class="mbtn active" data-mode="info">Info</button>
+      <button class="mbtn" data-mode="cinema">Cinema</button>
+      <button class="mbtn" data-mode="memory">Memory</button></div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span id="themeLabel">Light</span></button>
+      <button class="abtn" id="revealBtn">▶ Reveal</button>
+      <button class="abtn" id="importBtn">Import</button><input type="file" id="importFile" accept=".json,.zip" style="display:none">
+      <button class="abtn" id="copyJsonBtn">Copy JSON</button>
+      <button class="abtn primary" id="exportBtn">Export Package</button></div>
+  </div>
+
+  <!-- LEFT -->
+  <div class="panel-left">
+    <!-- PRESETS -->
+    <div class="sec open" id="sec-presets"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Presets</span></div>
+      <div class="sec-body"><div class="preset-row" id="presetList"></div><button class="add-btn" id="savePreset">+ Save current as preset</button></div></div>
+
+    <!-- CAMERA -->
+    <div class="sec open" id="sec-cam"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Camera</span></div>
+      <div class="sec-body">
+        <div class="ctrl"><label>radius <span id="v-rad">2.50</span></label><input type="range" id="s-rad" min="0.3" max="8" step="0.05" value="2.5"></div>
+        <div class="ctrl"><label>FOV <span id="v-fov">50</span></label><input type="range" id="s-fov" min="30" max="100" step="1" value="50"></div>
+        <div class="ctrl"><label>height <span id="v-ch">0.00</span></label><input type="range" id="s-ch" min="-2" max="2" step="0.05" value="0"></div>
+        <div class="sub-label">ORBIT LIMITS</div><div class="hint">Shift+drag to orbit · Shift+scroll to zoom</div>
+        <div class="ctrl"><label>H range ° <span id="v-hlim">30</span></label><input type="range" id="s-hlim" min="0" max="180" step="1" value="30"></div>
+        <div class="ctrl"><label>V min ° <span id="v-vmin">60</span></label><input type="range" id="s-vmin" min="10" max="90" step="1" value="60"></div>
+        <div class="ctrl"><label>V max ° <span id="v-vmax">100</span></label><input type="range" id="s-vmax" min="90" max="170" step="1" value="100"></div>
+        <div class="sub-label">ZOOM LIMITS</div>
+        <div class="ctrl"><label>min distance <span id="v-zmn">0.50</span></label><input type="range" id="s-zmn" min="0.2" max="3" step="0.1" value="0.5"></div>
+        <div class="ctrl"><label>max distance <span id="v-zmx">6.00</span></label><input type="range" id="s-zmx" min="3" max="12" step="0.5" value="6"></div>
+        <div class="sub-label">LOOK AT</div><div class="hint">Centre point the camera orbits around</div>
+        <div class="ctrl"><label>target X <span id="v-lx">0.00</span></label><input type="range" id="s-lx" min="-3" max="3" step="0.05" value="0"></div>
+        <div class="ctrl"><label>target Y <span id="v-ly">0.00</span></label><input type="range" id="s-ly" min="-3" max="3" step="0.05" value="0"></div>
+        <div class="ctrl"><label>target Z <span id="v-lz">0.00</span></label><input type="range" id="s-lz" min="-3" max="3" step="0.05" value="0"></div>
+        <div class="sub-label">IDLE</div><div class="hint">Gentle sway when not interacting</div>
+        <div class="fx-row"><span class="fx-label">idle</span><div class="tog" data-tog="idle"></div>
+          <div class="fx-sliders disabled" data-fx="idle">
+            <div class="ctrl"><label>speed <span id="v-isp">0.15</span></label><input type="range" id="s-isp" min="0.02" max="0.5" step="0.01" value="0.15"></div>
+            <div class="ctrl"><label>amplitude <span id="v-iam">0.04</span></label><input type="range" id="s-iam" min="0" max="0.15" step="0.005" value="0.04"></div>
+          </div></div>
+      </div></div>
+
+    <!-- EFFECTS -->
+    <div class="sec" id="sec-fx"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Effects</span></div>
+      <div class="sec-body">
+        <div class="fx-row"><span class="fx-label">drift</span><div class="tog" data-tog="drift"></div>
+          <div class="fx-sliders disabled" data-fx="drift">
+            <div class="ctrl"><label>amount <span id="v-da">0.015</span></label><input type="range" id="s-da" min="0" max="0.05" step="0.001" value="0.015"></div>
+            <div class="ctrl"><label>scale <span id="v-ds">3.0</span></label><input type="range" id="s-ds" min="0.5" max="10" step="0.5" value="3"></div>
+            <div class="ctrl"><label>speed <span id="v-dp">0.30</span></label><input type="range" id="s-dp" min="0.05" max="2" step="0.05" value="0.3"></div>
+            <div class="ctrl"><label>y damping <span id="v-dy">0.60</span></label><input type="range" id="s-dy" min="0" max="1" step="0.05" value="0.6"></div>
+            <div class="ctrl"><label>edge fade <span id="v-df">0.40</span></label><input type="range" id="s-df" min="0" max="1" step="0.05" value="0.4"></div>
+          </div></div>
+        <div class="fx-row"><span class="fx-label">warmth</span><div class="tog" data-tog="warmth"></div>
+          <div class="fx-sliders disabled" data-fx="warmth">
+            <div class="ctrl"><label>tint <span id="v-wt">0.08</span></label><input type="range" id="s-wt" min="0" max="0.3" step="0.01" value="0.08"></div>
+          </div></div>
+      </div></div>
+
+    <!-- POST PROCESSING -->
+    <div class="sec" id="sec-post"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Post Processing</span></div>
+      <div class="sec-body">
+        <div class="hint" style="margin-bottom:6px">GPU shader effects via EffectComposer</div>
+        <div class="fx-row"><span class="fx-label">bloom</span><div class="tog" data-tog="bloom"></div>
+          <div class="fx-sliders disabled" data-fx="bloom">
+            <div class="ctrl"><label>strength <span id="v-bs">0.80</span></label><input type="range" id="s-bs" min="0" max="2" step="0.05" value="0.8"></div>
+            <div class="ctrl"><label>threshold <span id="v-bt">0.75</span></label><input type="range" id="s-bt" min="0" max="1.5" step="0.05" value="0.75"></div>
+            <div class="ctrl"><label>streak <span id="v-bk">0.35</span></label><input type="range" id="s-bk" min="0" max="1" step="0.05" value="0.35"></div>
+            <div class="ctrl"><label>tint <span id="v-bc">0.15</span></label><input type="range" id="s-bc" min="0" max="1" step="0.05" value="0.15"></div>
+          </div></div>
+        <div class="fx-row"><span class="fx-label">film</span><div class="tog" data-tog="film"></div>
+          <div class="fx-sliders disabled" data-fx="film">
+            <div class="ctrl"><label>exposure <span id="v-fe">0.00</span></label><input type="range" id="s-fe" min="-2" max="2" step="0.05" value="0"></div>
+            <div class="ctrl"><label>vignette <span id="v-fv">0.60</span></label><input type="range" id="s-fv" min="0" max="1" step="0.05" value="0.6"></div>
+            <div class="ctrl"><label>chroma <span id="v-fc">0.003</span></label><input type="range" id="s-fc" min="0" max="0.02" step="0.001" value="0.003"></div>
+            <div class="ctrl"><label>grain <span id="v-fg">0.04</span></label><input type="range" id="s-fg" min="0" max="0.2" step="0.005" value="0.04"></div>
+            <div class="ctrl"><label>tint <span id="v-ft">0.00</span></label><input type="range" id="s-ft" min="-1" max="1" step="0.05" value="0"></div>
+            <div class="ctrl"><label>fade <span id="v-ff">0.00</span></label><input type="range" id="s-ff" min="0" max="0.3" step="0.01" value="0"></div>
+          </div></div>
+        <div class="fx-row"><span class="fx-label">DOF</span><div class="tog" data-tog="dof"></div>
+          <div class="fx-sliders disabled" data-fx="dof">
+            <div class="ctrl"><label>aperture <span id="v-dfa">0.003</span></label><input type="range" id="s-dfa" min="0" max="0.05" step="0.001" value="0.003"></div>
+            <div class="ctrl"><label>blur <span id="v-dfb">0.08</span></label><input type="range" id="s-dfb" min="0" max="1" step="0.01" value="0.08"></div>
+          </div></div>
+      </div></div>
+
+    <!-- BACKGROUND -->
+    <div class="sec" id="sec-bg"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Background</span></div>
+      <div class="sec-body">
+        <div class="sub-label" style="margin-top:0">IMAGE PROCESSING</div>
+        <div class="hint">Applies when a background image is loaded</div>
+        <div class="ctrl"><label>blur <span id="v-bgb">50</span></label><input type="range" id="s-bgb" min="0" max="100" step="1" value="50"></div>
+        <div class="ctrl"><label>brightness <span id="v-bgr">0.40</span></label><input type="range" id="s-bgr" min="0" max="1" step="0.05" value="0.4"></div>
+        <div class="ctrl"><label>saturation <span id="v-bgs">1.20</span></label><input type="range" id="s-bgs" min="0" max="3" step="0.1" value="1.2"></div>
+        <div class="sub-label">SOLID COLOUR OVERRIDE</div>
+        <div class="hint">Toggle on to use a solid colour instead of the background image</div>
+        <div class="fx-row"><span class="fx-label">colour</span><div class="tog" data-tog="bgColor"></div>
+          <div class="fx-sliders disabled" data-fx="bgColor">
+            <div class="color-row"><div class="color-pick"><input type="color" id="bgColPick" value="#14100e"></div><input type="text" id="f-bgcol" placeholder="#14100E" style="flex:1;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:11px;outline:none"></div>
+          </div></div>
+      </div></div>
+
+    <!-- TRANSITIONS -->
+    <div class="sec" id="sec-trans"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Transitions</span></div>
+      <div class="sec-body"><div class="hint" style="margin-bottom:8px">Load 2+ splats to transition between them</div>
+        <div class="field"><label>Type</label><select id="sel-trans"><option value="crossfade">Crossfade</option><option value="dissolve-in">Dissolve</option></select></div>
+        <div class="ctrl"><label>duration <span id="v-td">1.50</span></label><input type="range" id="s-td" min="0.3" max="5" step="0.1" value="1.5"></div>
+        <button class="trigger-btn" id="transBtn">▶ Transition to Next</button>
+      </div></div>
+
+    <!-- INTERACTIVE -->
+    <div class="sec" id="sec-inter"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Interactive</span></div>
+      <div class="sec-body">
+        <div class="sub-label" style="margin-top:0">RIPPLE ON CLICK</div><div class="hint">Click on the splat to spawn ripple waves</div>
+        <div class="fx-row"><span class="fx-label">ripple</span><div class="tog" data-tog="ripple"></div>
+          <div class="fx-sliders disabled" data-fx="ripple">
+            <div class="ctrl"><label>strength <span id="v-rs">0.08</span></label><input type="range" id="s-rs" min="0" max="0.3" step="0.005" value="0.08"></div>
+          </div></div>
+        <div class="sub-label">DISSOLVE</div><div class="hint">Noise-based particle break-apart</div>
+        <div class="fx-row"><span class="fx-label">dissolve</span><div class="tog" data-tog="dissolve"></div>
+          <div class="fx-sliders disabled" data-fx="dissolve">
+            <div class="ctrl"><label>noise scale <span id="v-dn">3.0</span></label><input type="range" id="s-dn" min="0.5" max="10" step="0.5" value="3"></div>
+            <div class="ctrl"><label>lift <span id="v-dl">0.50</span></label><input type="range" id="s-dl" min="0" max="2" step="0.1" value="0.5"></div>
+            <div class="ctrl"><label>spread <span id="v-dss">1.0</span></label><input type="range" id="s-dss" min="0" max="3" step="0.1" value="1"></div>
+          </div></div>
+        <button class="trigger-btn" id="dissolveBtn">▶ Trigger Dissolve</button>
+      </div></div>
+
+    <!-- ADVANCED -->
+    <div class="sec" id="sec-adv"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Advanced</span></div>
+      <div class="sec-body">
+        <div class="sub-label" style="margin-top:0">REVEAL</div>
+        <div class="field"><label>Type</label><select id="sel-reveal"><option value="spread">Spread</option><option value="fade">Fade</option></select></div>
+        <div class="ctrl"><label>duration <span id="v-rd">3.0</span></label><input type="range" id="s-rd" min="0.5" max="8" step="0.1" value="3"></div>
+        <div class="sub-label">DISTANCE FADE</div><div class="hint">Fade splat edges beyond a radius</div>
+        <div class="fx-row"><span class="fx-label">fade</span><div class="tog" data-tog="fade"></div>
+          <div class="fx-sliders disabled" data-fx="fade">
+            <div class="ctrl"><label>radius <span id="v-fsr">3.0</span></label><input type="range" id="s-fsr" min="0.5" max="8" step="0.1" value="3"></div>
+            <div class="ctrl"><label>soft edge <span id="v-fse">1.50</span></label><input type="range" id="s-fse" min="0.1" max="5" step="0.1" value="1.5"></div>
+          </div></div>
+        <div class="sub-label">GYROSCOPE</div><div class="hint">Tilt device for parallax (mobile only)</div>
+        <div class="ctrl"><label>strength <span id="v-gs">0.15</span></label><input type="range" id="s-gs" min="0" max="0.5" step="0.01" value="0.15"></div>
+        <div class="sub-label">SPLAT TRANSFORM</div><div class="hint">Move the 3D geometry in space</div>
+        <div class="ctrl"><label>pos X <span id="v-sx">0.00</span></label><input type="range" id="s-sx" min="-3" max="3" step="0.05" value="0"></div>
+        <div class="ctrl"><label>pos Y <span id="v-sy">0.00</span></label><input type="range" id="s-sy" min="-3" max="3" step="0.05" value="0"></div>
+        <div class="ctrl"><label>pos Z <span id="v-sz">0.00</span></label><input type="range" id="s-sz" min="-3" max="3" step="0.05" value="0"></div>
+        <div class="ctrl"><label>scale <span id="v-ss">1.00</span></label><input type="range" id="s-ss" min="0.1" max="3" step="0.05" value="1"></div>
+      </div></div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center" id="centerPane">
+    <div class="device-frame" id="deviceFrame">
+      <img class="device-svg" id="deviceSvg" src="iphone15.svg" alt="">
+      <iframe id="preview" src="inside-preview.html"></iframe>
+    </div>
+    <div class="scale-bar"><label id="scaleLabel">393×852</label></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel-right">
+    <div class="sec open" id="sec-assets"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Assets</span></div>
+      <div class="sec-body">
+        <div class="sub-label" style="margin-top:0">SPLAT FILES</div><div class="asset-list" id="sogList"></div>
+        <div class="dropzone" id="dropSog"><div class="dropzone-label">Drop .sog / .splat / .ply</div><input type="file" id="fileSog" accept=".sog,.splat,.ply" multiple></div>
+        <div class="sub-label">BACKGROUND IMAGE</div>
+        <div class="dropzone" id="dropBg"><div class="dropzone-label">Drop background image</div><div class="dropzone-file" id="bgName"></div><button class="dropzone-rm" id="bgRm">×</button><input type="file" id="fileBg" accept="image/*"></div>
+        <div class="sub-label">PROMOTER LOGO</div>
+        <div class="dropzone" id="dropLogo"><div class="dropzone-label">Drop promoter logo</div><div class="dropzone-file" id="logoName"></div><button class="dropzone-rm" id="logoRm">×</button><input type="file" id="fileLogo" accept="image/*"></div>
+      </div></div>
+    <div class="sec open" id="sec-event"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Event Details</span></div>
+      <div class="sec-body">
+        <div class="field"><label>Event Name</label><input type="text" id="f-name" value="Homecoming"></div>
+        <div class="field"><label>Promoter</label><input type="text" id="f-promoter" value="Recess Presents"></div>
+        <div class="field"><label>Date</label><input type="date" id="f-date" value="2026-03-15"></div>
+        <div style="display:flex;gap:6px"><div class="field" style="flex:1"><label>Start</label><input type="time" id="f-start" value="22:00"></div><div class="field" style="flex:1"><label>End</label><input type="time" id="f-end" value="04:00"></div></div>
+        <div class="field"><label>Venue Name</label><input type="text" id="f-venue" value="Venue MOT"></div>
+        <div class="field"><label>Venue Address</label><input type="text" id="f-venueaddr" placeholder="Full address (for maps link)"></div>
+        <div class="field"><label>Genre</label><input type="text" id="f-genre" value="Afrobeats · Amapiano"></div>
+        <div class="field"><label>Description</label><textarea id="f-desc" rows="2">An evening of Afrobeats, Amapiano & good energy.</textarea></div>
+        <div class="field"><label>Ticket URL</label><input type="url" id="f-ticket" value="https://example.com/tickets"></div>
+        <div style="display:flex;gap:6px"><div class="field" style="flex:1"><label>Age</label><input type="text" id="f-age" value="18+"></div><div class="field" style="flex:1"><label>Last Entry</label><input type="text" id="f-entry" value="01:00"></div></div>
+      </div></div>
+    <div class="sec" id="sec-lineup"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Lineup</span></div>
+      <div class="sec-body"><div id="lineupList"></div><button class="add-btn" id="addArtist">+ Add artist</button></div></div>
+    <div class="sec" id="sec-past"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Past Events</span></div>
+      <div class="sec-body"><div id="pastList"></div><button class="add-btn" id="addPast">+ Add past event</button></div></div>
+    <div class="sec" id="sec-colour"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Accent Colour</span></div>
+      <div class="sec-body">
+        <div class="color-row"><div class="color-pick"><input type="color" id="accentPick" value="#ff4d00"></div><input type="text" id="f-accent" placeholder="Auto from bg image" style="flex:1;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:11px;outline:none"></div>
+        <div class="hint">Leave empty → auto-extract from background</div>
+      </div></div>
+    <div class="sec" id="sec-uitint"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">UI Glass Tint</span></div>
+      <div class="sec-body">
+        <div class="color-row"><div class="color-pick"><input type="color" id="uiTintPick" value="#14100e"></div><input type="text" id="f-uitint" placeholder="Auto from background" style="flex:1;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:11px;outline:none"></div>
+        <div class="hint">Tints all glass cards, chips & buttons</div>
+      </div></div>
+    <div class="sec" id="sec-cta"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">CTA Button</span></div>
+      <div class="sec-body">
+        <div class="color-row"><div class="color-pick"><input type="color" id="ctaPick" value="#ff4d00"></div><input type="text" id="f-ctacol" placeholder="Default: matches accent" style="flex:1;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:11px;outline:none"></div>
+        <div class="hint">Override the GET TICKETS button colour</div>
+      </div></div>
+    <div class="sec" id="sec-socials"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Socials</span></div>
+      <div class="sec-body">
+        <div class="field"><label>Instagram</label><input type="url" id="f-ig" placeholder="https://instagram.com/..."></div>
+        <div class="field"><label>Twitter / X</label><input type="url" id="f-tw" placeholder="https://twitter.com/..."></div>
+        <div class="field"><label>TikTok</label><input type="url" id="f-tt" placeholder="https://tiktok.com/@..."></div>
+      </div></div>
+    <div class="sec" id="sec-music"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Music Links</span></div>
+      <div class="sec-body">
+        <div class="hint">Shown in the music sheet bottom drawer</div>
+        <div class="field"><label>Spotify</label><input type="url" id="f-spotify" placeholder="https://open.spotify.com/..."></div>
+        <div class="field"><label>Apple Music</label><input type="url" id="f-apple" placeholder="https://music.apple.com/..."></div>
+        <div class="field"><label>SoundCloud</label><input type="url" id="f-soundcloud" placeholder="https://soundcloud.com/..."></div>
+      </div></div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id),preview=$('preview');let previewReady=false;
+
+// ═══ DEVICES — SVG frames with screen position as % of SVG ═══
+// Screen positions measured from rendered SVG calibration (Feb 24)
+const DEVICES={
+  iphone15:{w:430,h:932,svg:'iphone15.svg',svgW:467,svgH:963,
+    sx:3.96,sy:1.61,sw:92.08,sh:96.78,sr:50},
+  iphone13:{w:428,h:926,svg:'iphone13.svg',svgW:476,svgH:968,
+    sx:5.25,sy:2.17,sw:89.71,sh:95.66,sr:44},
+  pixel:{w:480,h:1040,svg:'pixel.svg',svgW:515,svgH:1089,
+    sx:1.94,sy:1.24,sw:95.34,sh:97.06,sr:26},
+  ipad:{w:820,h:1180,svg:'ipad.svg',svgW:930,svgH:1291,
+    sx:5.81,sy:4.42,sw:88.17,sh:91.40,sr:14,baseW:430}
+};
+let currentDevice='iphone15';
+function resizeFrame(){const f=$('deviceFrame'),c=$('centerPane'),d=DEVICES[currentDevice];
+  const maxH=c.clientHeight-50,maxW=c.clientWidth-60;
+  // Fit SVG aspect ratio into available space
+  const aspect=d.svgW/d.svgH;
+  let frameH=maxH,frameW=frameH*aspect;
+  if(frameW>maxW){frameW=maxW;frameH=frameW/aspect;}
+  f.style.width=Math.round(frameW)+'px';f.style.height=Math.round(frameH)+'px';
+  // Update SVG source
+  $('deviceSvg').src=d.svg;
+  // Position iframe at screen area (% of frame)
+  const iframe=f.querySelector('iframe');
+  const scrX=frameW*d.sx/100,scrY=frameH*d.sy/100;
+  const scrW=frameW*d.sw/100,scrH=frameH*d.sh/100;
+  iframe.style.left=Math.round(scrX)+'px';iframe.style.top=Math.round(scrY)+'px';
+  // Smart scaling: if baseW is set, render at phone width and scale up to fill
+  const iframeW=d.baseW||d.w;
+  const iframeH=d.baseW?Math.round(d.h*d.baseW/d.w):d.h;
+  iframe.style.width=iframeW+'px';iframe.style.height=iframeH+'px';
+  const scale=Math.min(scrW/iframeW,scrH/iframeH);
+  iframe.style.transform='scale('+scale+')';iframe.style.transformOrigin='top left';
+  // Clip iframe corners to match screen shape radius
+  iframe.style.borderRadius=Math.round(d.sr/scale)+'px';
+  $('scaleLabel').textContent=iframeW+'×'+iframeH;}
+$('deviceSel').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(!b)return;document.querySelectorAll('.dbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentDevice=b.dataset.device;resizeFrame();});
+
+// ═══ THEME TOGGLE ═══
+$('themeToggle').addEventListener('click',()=>{
+  const isLight=document.documentElement.classList.toggle('light');
+  $('themeLabel').textContent=isLight?'Dark':'Light';
+  localStorage.setItem('editor-theme',isLight?'light':'dark');
+});
+if(localStorage.getItem('editor-theme')==='light'){document.documentElement.classList.add('light');$('themeLabel').textContent='Dark';}
+
+// ═══ MODES ═══
+document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');sendP({type:'set-mode',mode:b.dataset.mode});}));
+$('revealBtn').addEventListener('click',()=>sendP({type:'trigger-reveal'}));
+$('transBtn').addEventListener('click',()=>triggerTransition());
+$('dissolveBtn').addEventListener('click',()=>sendP({type:'trigger-dissolve'}));
+
+// ═══ SECTIONS ═══
+document.querySelectorAll('.sec-head').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('open')));
+
+// ═══ TOGGLES — ALL OFF ═══
+const toggles={drift:false,warmth:false,bloom:false,film:false,dof:false,ripple:false,dissolve:false,fade:false,bgColor:false,idle:false};
+document.querySelectorAll('.tog').forEach(el=>{const k=el.dataset.tog;el.addEventListener('click',e=>{e.stopPropagation();toggles[k]=!toggles[k];el.classList.toggle('on',toggles[k]);const sl=document.querySelector(`[data-fx="${k}"]`);if(sl)sl.classList.toggle('disabled',!toggles[k]);pushConfig();});});
+
+// ═══ SLIDERS ═══
+const ALL_S='rad fov ch hlim vmin vmax zmn zmx lx ly lz isp iam da ds dp dy df wt bs bt bk bc fe fv fc fg ft ff dfa dfb bgb bgr bgs td rs dn dl dss rd fsr fse gs sx sy sz ss'.split(' ');
+ALL_S.forEach(id=>{const sl=$('s-'+id),vl=$('v-'+id);if(!sl)return;sl.addEventListener('input',()=>{const v=parseFloat(sl.value),d=sl.step.includes('.')?sl.step.split('.')[1].length:0;if(vl)vl.textContent=v.toFixed(d);pushConfig();});});
+$('sel-reveal')?.addEventListener('change',()=>pushConfig());$('sel-trans')?.addEventListener('change',()=>pushConfig());
+
+// ═══ COLOR PICKERS ═══
+$('bgColPick').addEventListener('input',e=>{$('f-bgcol').value=e.target.value;pushConfig();});
+$('f-bgcol').addEventListener('input',e=>{if(e.target.value.match(/^#[0-9a-fA-F]{6}$/)){$('bgColPick').value=e.target.value;}pushConfig();});
+$('accentPick').addEventListener('input',e=>{$('f-accent').value=e.target.value;pushEventData();});
+$('f-accent').addEventListener('input',e=>{if(e.target.value.match(/^#[0-9a-fA-F]{6}$/))$('accentPick').value=e.target.value;pushEventData();});
+$('ctaPick').addEventListener('input',e=>{$('f-ctacol').value=e.target.value;pushEventData();});
+$('uiTintPick').addEventListener('input',e=>{$('f-uitint').value=e.target.value;pushEventData();});
+$('f-uitint').addEventListener('input',e=>{if(e.target.value.match(/^#[0-9a-fA-F]{6}$/))$('uiTintPick').value=e.target.value;pushEventData();});
+$('f-ctacol').addEventListener('input',()=>pushEventData());
+
+// ═══ EVENT FIELDS ═══
+'f-name f-promoter f-date f-start f-end f-venue f-venueaddr f-genre f-desc f-ticket f-age f-entry f-ig f-tw f-tt f-spotify f-apple f-soundcloud'.split(' ').forEach(id=>{$(id)?.addEventListener('input',()=>pushEventData());});
+
+// ═══ ASSETS ═══
+const assets={sogs:[],background:null,logo:null,pastImages:{}};
+const assetFiles={background:null,logo:null,pastImages:{}};
+let activeSogIdx=0;
+function renderSogList(){const list=$('sogList');list.innerHTML='';assets.sogs.forEach((s,i)=>{const el=document.createElement('div');el.className='asset-item'+(i===activeSogIdx?' active':'');el.innerHTML=`<span class="idx">#${i+1}</span><span class="name">${s.name}</span><button class="rm">×</button>`;el.querySelector('.name').addEventListener('click',()=>{activeSogIdx=i;renderSogList();s.file.arrayBuffer().then(buf=>{sendP({type:'load-splat',index:i,buffer:buf,name:s.name,viewer:getViewerConfig()});});});el.querySelector('.rm').addEventListener('click',()=>{URL.revokeObjectURL(s.url);assets.sogs.splice(i,1);if(activeSogIdx>=assets.sogs.length)activeSogIdx=Math.max(0,assets.sogs.length-1);renderSogList();if(assets.sogs.length){const ns=assets.sogs[activeSogIdx];ns.file.arrayBuffer().then(buf=>{sendP({type:'load-splat',index:activeSogIdx,buffer:buf,name:ns.name,viewer:getViewerConfig()});});}});list.appendChild(el);});}
+function triggerTransition(){if(assets.sogs.length<2)return;const next=(activeSogIdx+1)%assets.sogs.length;const ns=assets.sogs[next];ns.file.arrayBuffer().then(buf=>{sendP({type:'transition',from:activeSogIdx,to:next,buffer:buf,name:ns.name,config:getViewerConfig().transitions});});activeSogIdx=next;renderSogList();}
+const dropSog=$('dropSog');dropSog.addEventListener('click',()=>$('fileSog').click());dropSog.addEventListener('dragover',e=>{e.preventDefault();dropSog.classList.add('active');});dropSog.addEventListener('dragleave',()=>dropSog.classList.remove('active'));dropSog.addEventListener('drop',e=>{e.preventDefault();dropSog.classList.remove('active');[...e.dataTransfer.files].forEach(addSog);});$('fileSog').addEventListener('change',()=>{[...$('fileSog').files].forEach(addSog);$('fileSog').value='';});
+function addSog(f){const u=URL.createObjectURL(f);assets.sogs.push({name:f.name,url:u,file:f});activeSogIdx=assets.sogs.length-1;renderSogList();
+  f.arrayBuffer().then(buf=>{sendP({type:'load-splat',index:activeSogIdx,buffer:buf,name:f.name,viewer:getViewerConfig()});});}
+function setupDrop(dId,fId,nId,rId,key,at){const d=$(dId),f=$(fId),n=$(nId),r=$(rId);d.addEventListener('click',e=>{if(e.target===r)return;f.click();});d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('active');});d.addEventListener('dragleave',()=>d.classList.remove('active'));d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('active');if(e.dataTransfer.files.length)loadA(e.dataTransfer.files[0],key,d,n,at);});f.addEventListener('change',()=>{if(f.files.length)loadA(f.files[0],key,d,n,at);});r.addEventListener('click',e=>{e.stopPropagation();if(assets[key])URL.revokeObjectURL(assets[key]);assets[key]=null;assetFiles[key]=null;d.classList.remove('loaded');n.textContent='';sendP({type:'asset',assetType:at,dataUrl:null});pushEventData();});}
+function loadA(f,key,d,n,at){const u=URL.createObjectURL(f);assets[key]=u;assetFiles[key]=f;d.classList.add('loaded');n.textContent=f.name;if(key==='background'){toggles.bgColor=false;const bgTog=document.querySelector('[data-tog="bgColor"]');if(bgTog)bgTog.classList.remove('on');const bgSl=document.querySelector('[data-fx="bgColor"]');if(bgSl)bgSl.classList.add('disabled');}
+  const reader=new FileReader();reader.onload=()=>{sendP({type:'asset',assetType:at,dataUrl:reader.result,viewer:getViewerConfig()});pushEventData();};reader.readAsDataURL(f);}
+setupDrop('dropBg','fileBg','bgName','bgRm','background','background');setupDrop('dropLogo','fileLogo','logoName','logoRm','logo','logo');
+
+// ═══ LINEUP ═══
+[{name:'DJ Jojo',hl:true},{name:'Sef Kombo',hl:true},{name:'Kxngs',hl:false}].forEach(a=>addArtistRow(a.name,a.hl));
+function addArtistRow(name,hl){const r=document.createElement('div');r.className='past-row';r.innerHTML=`<div class="past-info"><input value="${name||''}" placeholder="Artist"></div><label style="font-size:8px;color:var(--dim);flex-shrink:0"><input type="checkbox" ${hl?'checked':''} style="margin-right:2px">HL</label><button class="past-rm">×</button>`;r.querySelector('.past-rm').onclick=()=>{r.remove();pushEventData();};r.querySelector('input:not([type])').oninput=()=>pushEventData();r.querySelector('[type="checkbox"]').onchange=()=>pushEventData();$('lineupList').appendChild(r);}
+$('addArtist').addEventListener('click',()=>addArtistRow('',false));
+
+// ═══ PAST EVENTS ═══
+[{t:'NYE Special',d:'Dec 31'},{t:'Detour x Yam',d:'Nov 23'},{t:'Summer Close',d:'Sep 14'}].forEach((p,i)=>addPastRow(p.t,p.d,i));
+function addPastRow(t,d,idx){const i=idx??document.querySelectorAll('#pastList .past-row').length;const r=document.createElement('div');r.className='past-row';r.innerHTML=`<div class="past-thumb" data-idx="${i}" style="cursor:pointer"></div><div class="past-info"><input value="${t||''}" placeholder="Title" data-field="title"><input value="${d||''}" placeholder="Date" data-field="date" style="font-size:9px;color:var(--dim)"></div><button class="past-rm">×</button>`;r.querySelector('.past-rm').onclick=()=>{r.remove();pushEventData();};r.querySelectorAll('input').forEach(i=>i.oninput=()=>pushEventData());r.querySelector('.past-thumb').onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{if(!inp.files.length)return;const u=URL.createObjectURL(inp.files[0]);assets.pastImages[i]=u;assetFiles.pastImages[i]=inp.files[0];r.querySelector('.past-thumb').innerHTML='<img src="'+u+'">';pushEventData();};inp.click();};$('pastList').appendChild(r);}
+$('addPast').addEventListener('click',()=>addPastRow('',''));
+
+// ═══ CONFIG ═══
+function pf(id){return parseFloat($('s-'+id)?.value||0);}
+function getViewerConfig(){return{
+  camera:{radius:pf('rad'),fov:pf('fov'),height:pf('ch'),hRange:pf('hlim'),vMin:pf('vmin'),vMax:pf('vmax'),targetX:pf('lx'),targetY:pf('ly'),targetZ:pf('lz')},
+  zoom:{min:pf('zmn'),max:pf('zmx')},idle:{enabled:toggles.idle,speed:pf('isp'),amplitude:pf('iam')},
+  effects:{drift:{enabled:toggles.drift,amount:pf('da'),scale:pf('ds'),speed:pf('dp'),yDamping:pf('dy'),edgeFade:pf('df')},warmth:{enabled:toggles.warmth,tint:pf('wt')}},
+  post:{bloom:{enabled:toggles.bloom,strength:pf('bs'),threshold:pf('bt'),streak:pf('bk'),tint:pf('bc')},filmGrade:{enabled:toggles.film,exposure:pf('fe'),vignette:pf('fv'),chroma:pf('fc'),grain:pf('fg'),tint:pf('ft'),fade:pf('ff')},dof:{enabled:toggles.dof,aperture:pf('dfa'),blur:pf('dfb')}},
+  background:{blur:pf('bgb'),brightness:pf('bgr'),saturation:pf('bgs'),color:$('f-bgcol').value||null,colorOverride:toggles.bgColor},
+  transitions:{type:$('sel-trans').value,duration:pf('td')},
+  ripple:{enabled:toggles.ripple,strength:pf('rs')},dissolve:{enabled:toggles.dissolve,noiseScale:pf('dn'),lift:pf('dl'),spread:pf('dss')},
+  reveal:{type:$('sel-reveal').value,duration:pf('rd')},
+  distanceFade:{enabled:toggles.fade,radius:pf('fsr'),softEdge:pf('fse')},
+  gyroscope:{strength:pf('gs')},splatTransform:{posX:pf('sx'),posY:pf('sy'),posZ:pf('sz'),scale:pf('ss')}};}
+function getEventConfig(){
+  const lu=[];document.querySelectorAll('#lineupList .past-row').forEach(r=>{const n=r.querySelector('input:not([type="checkbox"])');const h=r.querySelector('[type="checkbox"]');if(n?.value.trim())lu.push({name:n.value.trim(),headliner:h?.checked||false});});
+  const pe=[];document.querySelectorAll('#pastList .past-row').forEach((r,i)=>{pe.push({title:r.querySelector('[data-field="title"]')?.value||'',date:r.querySelector('[data-field="date"]')?.value||'',image:assets.pastImages[i]||''});});
+  const ctaVal=$('f-ctacol').value;let ctaBg=null,ctaBdr=null;
+  if(ctaVal&&ctaVal.match(/^#[0-9a-fA-F]{6}$/)){const r=parseInt(ctaVal.slice(1,3),16),g=parseInt(ctaVal.slice(3,5),16),b=parseInt(ctaVal.slice(5,7),16);ctaBg=`rgba(${r},${g},${b},.18)`;ctaBdr=`rgba(${r},${g},${b},.3)`;}
+  return{name:$('f-name').value,promoter:$('f-promoter').value,promoterLogo:assets.logo||'',date:$('f-date').value,time:{start:$('f-start').value,end:$('f-end').value},venue:{name:$('f-venue').value,address:$('f-venueaddr').value},genre:$('f-genre').value,description:$('f-desc').value,age:$('f-age').value,lastEntry:$('f-entry').value,ticketUrl:$('f-ticket').value,lineup:lu,pastEvents:pe,socials:{instagram:$('f-ig').value,twitter:$('f-tw').value,tiktok:$('f-tt').value},music:{spotify:$('f-spotify').value,apple:$('f-apple').value,soundcloud:$('f-soundcloud').value},uiTint:$('f-uitint').value||null,accentColorOverride:$('f-accent').value||null,ctaColor:ctaBg,ctaBorder:ctaBdr};}
+
+let pushT=null;
+function pushConfig(){clearTimeout(pushT);pushT=setTimeout(()=>sendP({type:'viewer-update',viewer:getViewerConfig()}),50);}
+function pushEventData(){sendP({type:'event-update',event:getEventConfig()});}
+function sendP(msg){if(preview.contentWindow)preview.contentWindow.postMessage(msg,'*');}
+
+window.addEventListener('message',e=>{if(!e.data?.type)return;
+  if(e.data.type==='preview-ready'){previewReady=true;sendP({type:'config',event:getEventConfig(),viewer:getViewerConfig()});}
+  if(e.data.type==='mode-changed')document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.mode===e.data.mode));
+  if(e.data.type==='accent-extracted'){if(!$('f-accent').value){$('accentPick').value=e.data.hex;$('f-accent').placeholder='Auto: '+e.data.hex;}}
+  if(e.data.type==='memory-nav'){
+    // index -1 = back to main event (splat 0), index N = past event N (splat N+1)
+    const sogIdx=e.data.index<0?0:e.data.index+1;
+    if(sogIdx<assets.sogs.length&&sogIdx!==activeSogIdx){
+      const ns=assets.sogs[sogIdx];
+      ns.file.arrayBuffer().then(buf=>{
+        sendP({type:'transition',from:activeSogIdx,to:sogIdx,buffer:buf,name:ns.name,config:getViewerConfig().transitions});
+      });
+      activeSogIdx=sogIdx;renderSogList();
+    }
+  }
+});
+
+// ═══ PRESETS (localStorage) ═══
+const PRESET_KEY='inside-editor-presets';
+function loadPresets(){try{return JSON.parse(localStorage.getItem(PRESET_KEY))||[];}catch(e){return[];}}
+function savePresets(list){localStorage.setItem(PRESET_KEY,JSON.stringify(list));}
+function renderPresets(){const list=$('presetList');list.innerHTML='';loadPresets().forEach((p,i)=>{const chip=document.createElement('span');chip.className='preset-chip';chip.innerHTML=`${p.name}<span class="x">×</span>`;chip.querySelector('.x').addEventListener('click',e=>{e.stopPropagation();const ps=loadPresets();ps.splice(i,1);savePresets(ps);renderPresets();});chip.addEventListener('click',()=>applyImport(p.data));list.appendChild(chip);});}
+$('savePreset').addEventListener('click',()=>{const name=prompt('Preset name:');if(!name)return;const ps=loadPresets();ps.push({name,data:{event:getEventConfig(),viewer:getViewerConfig()}});savePresets(ps);renderPresets();});
+renderPresets();
+
+// ═══ IMPORT / EXPORT ═══
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async()=>{
+  const f=$('importFile').files[0];if(!f)return;
+  try{
+    if(f.name.endsWith('.zip')&&typeof JSZip!=='undefined'){
+      // Import ZIP package
+      const zip=await JSZip.loadAsync(f);
+      const cfgFile=zip.file('config.json');
+      if(!cfgFile){alert('No config.json found in ZIP');return;}
+      const cfg=JSON.parse(await cfgFile.async('text'));
+
+      // Load splat files from ZIP
+      if(cfg.assets?.splats){
+        for(let i=0;i<cfg.assets.splats.length;i++){
+          const path=cfg.assets.splats[i].replace('./','');
+          const sogFile=zip.file(path);
+          if(sogFile){
+            const buf=await sogFile.async('arraybuffer');
+            const blob=new Blob([buf],{type:'application/octet-stream'});
+            const name=path.split('/').pop();
+            const file=new File([blob],name);
+            addSog(file);
+          }
+        }
+      }
+      // Load background from ZIP
+      if(cfg.assets?.background){
+        const path=cfg.assets.background.replace('./','');
+        const bgFile=zip.file(path);
+        if(bgFile){
+          const buf=await bgFile.async('arraybuffer');
+          const name=path.split('/').pop();
+          const blob=new Blob([buf],{type:'image/'+name.split('.').pop()});
+          const file=new File([blob],name);
+          loadA(file,'background',$('dropBg'),$('bgName'),'background');
+        }
+      }
+      // Load logo from ZIP
+      if(cfg.assets?.logo){
+        const path=cfg.assets.logo.replace('./','');
+        const logoFile=zip.file(path);
+        if(logoFile){
+          const buf=await logoFile.async('arraybuffer');
+          const name=path.split('/').pop();
+          const blob=new Blob([buf],{type:'image/'+name.split('.').pop()});
+          const file=new File([blob],name);
+          loadA(file,'logo',$('dropLogo'),$('logoName'),'logo');
+        }
+      }
+      applyImport(cfg);
+      $('importBtn').textContent='Loaded ✓';
+    } else {
+      // Import JSON config only
+      applyImport(JSON.parse(await f.text()));
+      $('importBtn').textContent='Loaded ✓';
+    }
+    setTimeout(()=>$('importBtn').textContent='Import',2000);
+  }catch(e){console.error(e);$('importBtn').textContent='Error';setTimeout(()=>$('importBtn').textContent='Import',2000);}
+  $('importFile').value='';
+});
+function applyImport(cfg){const v=cfg.viewer;if(!v)return;
+  const sm={'rad':v.camera?.radius,'fov':v.camera?.fov,'ch':v.camera?.height,'hlim':v.camera?.hRange,'vmin':v.camera?.vMin,'vmax':v.camera?.vMax,'zmn':v.zoom?.min,'zmx':v.zoom?.max,
+    'lx':v.camera?.targetX,'ly':v.camera?.targetY,'lz':v.camera?.targetZ,'isp':v.idle?.speed,'iam':v.idle?.amplitude,
+    'da':v.effects?.drift?.amount,'ds':v.effects?.drift?.scale,'dp':v.effects?.drift?.speed,'dy':v.effects?.drift?.yDamping,'df':v.effects?.drift?.edgeFade,
+    'wt':v.effects?.warmth?.tint,'bs':v.post?.bloom?.strength,'bt':v.post?.bloom?.threshold,'bk':v.post?.bloom?.streak,'bc':v.post?.bloom?.tint,
+    'fe':v.post?.filmGrade?.exposure,'fv':v.post?.filmGrade?.vignette,'fc':v.post?.filmGrade?.chroma,'fg':v.post?.filmGrade?.grain,'ft':v.post?.filmGrade?.tint,'ff':v.post?.filmGrade?.fade,
+    'dfa':v.post?.dof?.aperture,'dfb':v.post?.dof?.blur,'bgb':v.background?.blur,'bgr':v.background?.brightness,'bgs':v.background?.saturation,
+    'td':v.transitions?.duration,'rs':v.ripple?.strength,'dn':v.dissolve?.noiseScale,'dl':v.dissolve?.lift,'dss':v.dissolve?.spread,
+    'rd':v.reveal?.duration,'fsr':v.distanceFade?.radius,'fse':v.distanceFade?.softEdge,'gs':v.gyroscope?.strength,
+    'sx':v.splatTransform?.posX,'sy':v.splatTransform?.posY,'sz':v.splatTransform?.posZ,'ss':v.splatTransform?.scale};
+  for(const[id,val]of Object.entries(sm)){if(val==null)continue;const sl=$('s-'+id),vl=$('v-'+id);if(sl){sl.value=val;const d=sl.step.includes('.')?sl.step.split('.')[1].length:0;if(vl)vl.textContent=parseFloat(val).toFixed(d);}}
+  const tm={drift:v.effects?.drift?.enabled,warmth:v.effects?.warmth?.enabled,bloom:v.post?.bloom?.enabled,film:v.post?.filmGrade?.enabled,dof:v.post?.dof?.enabled,ripple:v.ripple?.enabled,dissolve:v.dissolve?.enabled,fade:v.distanceFade?.enabled,bgColor:v.background?.colorOverride,idle:v.idle?.enabled};
+  for(const[k,val]of Object.entries(tm)){if(val==null)continue;toggles[k]=val;const el=document.querySelector(`[data-tog="${k}"]`);if(el)el.classList.toggle('on',val);const sl=document.querySelector(`[data-fx="${k}"]`);if(sl)sl.classList.toggle('disabled',!val);}
+  if(v.reveal?.type)$('sel-reveal').value=v.reveal.type;if(v.transitions?.type)$('sel-trans').value=v.transitions.type;
+  if(v.background?.color){$('f-bgcol').value=v.background.color;if(v.background.color.match(/^#/))$('bgColPick').value=v.background.color;}
+  const ev=cfg.event;if(ev){if(ev.name)$('f-name').value=ev.name;if(ev.promoter)$('f-promoter').value=ev.promoter;if(ev.date)$('f-date').value=ev.date;if(ev.time){$('f-start').value=ev.time.start||'';$('f-end').value=ev.time.end||'';}if(ev.venue){$('f-venue').value=ev.venue.name||'';$('f-venueaddr').value=ev.venue.address||'';}if(ev.genre)$('f-genre').value=ev.genre;if(ev.description)$('f-desc').value=ev.description;if(ev.ticketUrl)$('f-ticket').value=ev.ticketUrl;if(ev.age)$('f-age').value=ev.age;if(ev.lastEntry)$('f-entry').value=ev.lastEntry;if(ev.socials){$('f-ig').value=ev.socials.instagram||'';$('f-tw').value=ev.socials.twitter||'';$('f-tt').value=ev.socials.tiktok||'';}if(ev.music){$('f-spotify').value=ev.music.spotify||'';$('f-apple').value=ev.music.apple||'';$('f-soundcloud').value=ev.music.soundcloud||'';}if(ev.uiTint){$('f-uitint').value=ev.uiTint;if(ev.uiTint.match(/^#/))$('uiTintPick').value=ev.uiTint;}if(ev.accentColorOverride){$('f-accent').value=ev.accentColorOverride;if(ev.accentColorOverride.match(/^#/))$('accentPick').value=ev.accentColorOverride;}}
+  pushEventData();pushConfig();}
+
+// ═══ COPY JSON (quick clipboard) ═══
+$('copyJsonBtn').addEventListener('click',async()=>{
+  const j=JSON.stringify({event:getEventConfig(),viewer:getViewerConfig()},null,2);
+  try{await navigator.clipboard.writeText(j);$('copyJsonBtn').textContent='Copied ✓';$('copyJsonBtn').classList.add('done');}
+  catch(e){const b=new Blob([j],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='config.json';a.click();URL.revokeObjectURL(u);$('copyJsonBtn').textContent='Downloaded ✓';$('copyJsonBtn').classList.add('done');}
+  setTimeout(()=>{$('copyJsonBtn').textContent='Copy JSON';$('copyJsonBtn').classList.remove('done');},2000);
+});
+
+// ═══ EXPORT PACKAGE (ZIP with config + all assets) ═══
+function getFileExt(file){if(!file||!file.name)return'';const n=file.name;const dot=n.lastIndexOf('.');return dot>=0?n.slice(dot).toLowerCase():'';}
+
+$('exportBtn').addEventListener('click',async()=>{
+  if(typeof JSZip==='undefined'){alert('JSZip not loaded');return;}
+  const btn=$('exportBtn');btn.textContent='Packing…';btn.style.pointerEvents='none';
+
+  try{
+    const zip=new JSZip();
+    const assetsDir=zip.folder('assets');
+    const eventCfg=getEventConfig();
+    const viewerCfg=getViewerConfig();
+
+    // Slug from event name
+    const slug=(eventCfg.name||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+$/,'');
+
+    // ── Splat files ──
+    const splatPaths=[];
+    for(let i=0;i<assets.sogs.length;i++){
+      const s=assets.sogs[i];
+      const ext=getFileExt(s.file)||'.sog';
+      const fname=i===0?'main'+ext:'past-'+i+ext;
+      const buf=await s.file.arrayBuffer();
+      assetsDir.file(fname,buf);
+      splatPaths.push('./assets/'+fname);
+    }
+
+    // ── Background image ──
+    let bgPath=null;
+    if(assetFiles.background){
+      const ext=getFileExt(assetFiles.background)||'.jpg';
+      const fname='bg'+ext;
+      const buf=await assetFiles.background.arrayBuffer();
+      assetsDir.file(fname,buf);
+      bgPath='./assets/'+fname;
+    }
+
+    // ── Promoter logo ──
+    let logoPath=null;
+    if(assetFiles.logo){
+      const ext=getFileExt(assetFiles.logo)||'.png';
+      const fname='logo'+ext;
+      const buf=await assetFiles.logo.arrayBuffer();
+      assetsDir.file(fname,buf);
+      logoPath='./assets/'+fname;
+    }
+
+    // ── Past event images ──
+    const pastDir=assetsDir.folder('past');
+    const pastImagePaths={};
+    for(const[idx,file]of Object.entries(assetFiles.pastImages)){
+      if(!file)continue;
+      const ext=getFileExt(file)||'.jpg';
+      const fname=idx+ext;
+      const buf=await file.arrayBuffer();
+      pastDir.file(fname,buf);
+      pastImagePaths[idx]='./assets/past/'+fname;
+    }
+
+    // ── Update event config with relative paths ──
+    const exportEvent={...eventCfg};
+    if(logoPath)exportEvent.promoterLogo=logoPath;
+    if(exportEvent.pastEvents){
+      exportEvent.pastEvents=exportEvent.pastEvents.map((pe,i)=>({
+        ...pe,
+        image:pastImagePaths[i]||pe.image||''
+      }));
+    }
+
+    // ── Build config.json ──
+    const config={
+      event:exportEvent,
+      viewer:viewerCfg,
+      assets:{
+        splats:splatPaths,
+        background:bgPath,
+        logo:logoPath,
+      }
+    };
+    zip.file('config.json',JSON.stringify(config,null,2));
+
+    // ── Copy the preview page as index.html ──
+    // Update standalone defaults to point at our asset paths
+    try{
+      const previewResp=await fetch('inside-preview.html');
+      let previewHtml=await previewResp.text();
+      // Patch standalone config: replace default splatUrl and bgImage
+      if(splatPaths.length)previewHtml=previewHtml.replace(
+        /splatUrl:\s*isEmbedded\s*\?\s*null\s*:\s*"[^"]*"/,
+        'splatUrl: isEmbedded ? null : "'+splatPaths[0]+'"'
+      );
+      if(bgPath)previewHtml=previewHtml.replace(
+        /bgImage:\s*isEmbedded\s*\?\s*null\s*:\s*"[^"]*"/,
+        'bgImage: isEmbedded ? null : "'+bgPath+'"'
+      );
+      zip.file('index.html',previewHtml);
+    }catch(e){
+      // If we can't fetch preview, skip index.html
+    }
+
+    // ── Generate ZIP ──
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=slug+'.zip';a.click();
+    URL.revokeObjectURL(url);
+
+    btn.textContent='Exported ✓';btn.classList.add('done');
+  }catch(e){
+    console.error('Export failed:',e);
+    btn.textContent='Export Failed';
+  }
+  btn.style.pointerEvents='';
+  setTimeout(()=>{btn.textContent='Export Package';btn.classList.remove('done');},2500);
+});
+
+window.addEventListener('resize',resizeFrame);window.addEventListener('load',resizeFrame);
+</script>
+</body>
+</html>
