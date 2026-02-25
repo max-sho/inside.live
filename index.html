@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta property="og:title" content="Homecoming — inside.live">
 <meta property="og:description" content="Recess Presents · Venue MOT · Afrobeats & Amapiano">
 <meta property="og:type" content="website">
@@ -36,8 +36,9 @@
   --gl-bg:rgba(var(--uiR),var(--uiG),var(--uiB),.78);--gl-bdr:rgba(255,255,255,.22);
   --r:16px;--r-sm:12px
 }
-html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;scrollbar-width:none;-ms-overflow-style:none}
-html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
+html{background:var(--bg);overflow-y:scroll;scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar{display:none}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none}
 
 /* ── Glass ── */
 .g{position:relative;background:var(--gl-bg);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--gl-bdr);border-radius:var(--r);box-shadow:0 .5px 0 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.25);overflow:hidden}
@@ -570,6 +571,7 @@ function extractAccentFromBg(imgData){
   if(isEmbedded){
     const hex='#'+[boosted.r,boosted.g,boosted.b].map(v=>v.toString(16).padStart(2,'0')).join('');
     window.parent.postMessage({type:'accent-extracted',hex},'*');
+    if(!EC?.accentColorOverride)applyColor(boosted);
   } else if(!EC?.accentColorOverride){
     applyColor(boosted);
   }
