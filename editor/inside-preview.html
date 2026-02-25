@@ -75,7 +75,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 }
 .content::before{
   content:'';position:absolute;top:0;left:-100vw;right:-100vw;
-  height:900px;z-index:-1;pointer-events:none;
+  bottom:0;z-index:-1;pointer-events:none;
   background:linear-gradient(to bottom,
     transparent 0%,
     rgba(var(--bgR),var(--bgG),var(--bgB),.02) 100px,
@@ -143,14 +143,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 .dv{font-size:12px;font-weight:600;color:rgba(255,255,255,.78)}
 #dets{border-top:1px solid rgba(255,255,255,.06);padding-top:6px;margin-top:2px}
 
-/* CTA */
-.cta{display:block;width:100%;padding:15px 16px;position:relative;overflow:hidden;
-  background:rgba(255,77,0,.25);backdrop-filter:blur(40px) saturate(200%);-webkit-backdrop-filter:blur(40px) saturate(200%);
-  border:1px solid rgba(255,77,0,.3);border-radius:var(--r);
-  box-shadow:0 .5px 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.2);
+/* CTA — inherits glass from .g */
+.cta{display:block;width:100%;padding:15px 16px;
   color:#fff;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-align:center;text-decoration:none;cursor:pointer;transition:all .2s ease}
-.cta:active{transform:scale(.985);background:rgba(255,77,0,.3)}
-.cta::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.05) 0%,transparent 50%);pointer-events:none}
+.cta:active{transform:scale(.985)}
 
 /* Past events */
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -171,7 +167,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 /* Footer */
 .ft{padding:16px 16px 36px;text-align:center}
 .ft-t{font-size:10.5px;color:var(--dim);letter-spacing:.5px}
-.ft-t a{color:var(--mid);text-decoration:none;font-weight:600}
+.ft-t a{color:#f8571d;text-decoration:none;font-weight:600}
 
 /* ══════════════════════════════════════════
    CINEMA BAR — bottom bar for cinema + memory
@@ -180,12 +176,17 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
   position:fixed;bottom:0;left:50%;
   transform:translateX(-50%) translateY(100%);
   width:100%;max-width:430px;z-index:60;
-  padding:20px 20px;
+  padding:40px 20px 20px;
   padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
-  background:rgba(var(--bgR),var(--bgG),var(--bgB),.75);
-  backdrop-filter:blur(30px) saturate(200%);
-  -webkit-backdrop-filter:blur(30px) saturate(200%);
-  border-top:1px solid rgba(255,255,255,.06);
+  background:linear-gradient(to bottom,
+    transparent 0%,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.4) 20%,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.7) 40%,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.88) 60%,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.95) 80%,
+    rgb(var(--bgR),var(--bgG),var(--bgB)) 100%
+  );
+  border:none;
   transition:transform .5s cubic-bezier(.16,1,.3,1);
   display:flex;flex-direction:column;align-items:center;gap:12px;
   text-align:center;
@@ -198,25 +199,26 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 
 .cbar-cta{
   display:block;width:100%;padding:13px;text-align:center;
-  background:rgba(255,77,0,.18);border:1px solid rgba(255,77,0,.28);
-  color:#fff;border-radius:var(--r);
+  color:#fff;
   font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
   letter-spacing:3px;text-transform:uppercase;
   text-decoration:none;cursor:pointer;-webkit-appearance:none;
   transition:all .2s ease;
 }
-.cbar-cta:active{transform:scale(.985);background:rgba(255,77,0,.26)}
+.cbar-cta:active{transform:scale(.985)}
 
 /* Home button (memory mode) */
 .cbar-home{
   width:40px;height:40px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:50%;cursor:pointer;color:rgba(255,255,255,.55);
+  background:var(--gl-bg);
+  border:1px solid var(--gl-bdr);
+  border-radius:50%;cursor:pointer;color:var(--accent);
   padding:0;-webkit-appearance:none;transition:all .2s ease;
+  backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:0 .5px 0 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.25);
 }
-.cbar-home:active{transform:scale(.9);background:rgba(255,255,255,.12);color:var(--text)}
+.cbar-home:active{transform:scale(.9)}
 .cbar-home svg{width:18px;height:18px}
 
 /* Nav row — prev / home / next */
@@ -224,12 +226,14 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 .cbar-arr{
   width:36px;height:36px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:50%;cursor:pointer;color:rgba(255,255,255,.45);
+  background:var(--gl-bg);
+  border:1px solid var(--gl-bdr);
+  border-radius:50%;cursor:pointer;color:var(--accent);
   padding:0;-webkit-appearance:none;transition:all .2s ease;
+  backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:0 .5px 0 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.25);
 }
-.cbar-arr:active{transform:scale(.9);background:rgba(255,255,255,.1);color:var(--text)}
+.cbar-arr:active{transform:scale(.9)}
 .cbar-arr.dim{opacity:.25;pointer-events:none}
 .cbar-arr svg{width:16px;height:16px}
 
@@ -271,8 +275,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 .sticky{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:430px;z-index:50;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:rgba(var(--bgR),var(--bgG),var(--bgB),.88);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid rgba(255,255,255,.06);transition:transform .3s cubic-bezier(.16,1,.3,1)}
 .sticky.on{transform:translateX(-50%) translateY(0)}
 .page.cinema .sticky,.page.memory .sticky{transform:translateX(-50%) translateY(100%)!important}
-.sticky-b{display:block;width:100%;padding:13px;text-align:center;background:rgba(255,77,0,.2);border:1px solid rgba(255,77,0,.3);color:#fff;border-radius:var(--r);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-decoration:none;cursor:pointer;-webkit-appearance:none;transition:all .2s ease}
-.sticky-b:active{transform:scale(.985);background:rgba(255,77,0,.28)}
+.sticky-b{display:block;width:100%;padding:13px;text-align:center;color:#fff;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-decoration:none;cursor:pointer;-webkit-appearance:none;transition:all .2s ease}
+.sticky-b:active{transform:scale(.985)}
 
 /* ── Sheets ── */
 .shov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s ease}
@@ -353,14 +357,11 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
           <span class="at h">Sef Kombo</span>
           <span class="at">Kxngs</span>
         </div>
-        <div id="dets">
-          <div class="dr"><span class="dl">Age</span><span class="dv" id="dAge">18+</span></div>
-          <div class="dr"><span class="dl">Last entry</span><span class="dv" id="dEnt">01:00</span></div>
-        </div>
+        <div id="dets"></div>
       </div>
     </div>
 
-    <a href="#" class="cta" id="cta">GET TICKETS</a>
+    <a href="#" class="cta g" id="cta">GET TICKETS</a>
 
     <div id="pastSec">
       <div class="pgrid" id="pgrid">
@@ -394,7 +395,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
   <span class="cbar-label" id="cbarLabel">RECESS PRESENTS</span>
   <div class="cbar-title" id="cbarTitle">Homecoming</div>
   <span class="cbar-date" id="cbarDate"></span>
-  <a href="#" class="cbar-cta" id="cbarCta">GET TICKETS</a>
+  <a href="#" class="cbar-cta g" id="cbarCta">GET TICKETS</a>
   <div class="cbar-nav" id="cbarNav">
     <button class="cbar-arr" id="cbarPrev" aria-label="Previous event">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -410,7 +411,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 
 <!-- Sticky CTA (info mode only) -->
 <div class="sticky" id="sticky">
-  <a href="#" class="sticky-b" id="sBtn">GET TICKETS</a>
+  <a href="#" class="sticky-b g" id="sBtn">GET TICKETS</a>
 </div>
 
 <!-- Music sheet -->
@@ -882,16 +883,18 @@ applyAllToggles();
 // ═══════════════════════════════════════════════════
 // VIEWER CONFIG APPLICATION (from editor postMessage)
 // ═══════════════════════════════════════════════════
+let _lastCfgRadius=null,_lastCfgTX=null,_lastCfgTY=null,_lastCfgTZ=null;
+let _customBgHex=null; // tracks if user set a solid bg color
 function applyViewerConfig(v){
   if(!v)return;
   if(v.camera){
-    if(v.camera.radius!=null&&v.camera.radius!==VC.radius){VC.radius=v.camera.radius;baseRadius=v.camera.radius;}
+    if(v.camera.radius!=null){VC.radius=v.camera.radius;if(_lastCfgRadius===null||v.camera.radius!==_lastCfgRadius){baseRadius=v.camera.radius;}_lastCfgRadius=v.camera.radius;}
     if(v.camera.fov!=null&&v.camera.fov!==VC.fov){VC.fov=v.camera.fov;camera.fov=v.camera.fov;camera.updateProjectionMatrix();}
     if(v.camera.height!=null)VC.camHeight=v.camera.height;
     if(v.camera.hRange!=null)VC.hLimit=v.camera.hRange;if(v.camera.vMin!=null)VC.vMin=v.camera.vMin;if(v.camera.vMax!=null)VC.vMax=v.camera.vMax;
-    if(v.camera.targetX!=null&&v.camera.targetX!==VC.lookX){VC.lookX=v.camera.targetX;target.x=v.camera.targetX;}
-    if(v.camera.targetY!=null&&v.camera.targetY!==VC.lookY){VC.lookY=v.camera.targetY;target.y=v.camera.targetY;}
-    if(v.camera.targetZ!=null&&v.camera.targetZ!==VC.lookZ){VC.lookZ=v.camera.targetZ;target.z=v.camera.targetZ;}
+    if(v.camera.targetX!=null){VC.lookX=v.camera.targetX;if(_lastCfgTX===null||v.camera.targetX!==_lastCfgTX)target.x=v.camera.targetX;_lastCfgTX=v.camera.targetX;}
+    if(v.camera.targetY!=null){VC.lookY=v.camera.targetY;if(_lastCfgTY===null||v.camera.targetY!==_lastCfgTY)target.y=v.camera.targetY;_lastCfgTY=v.camera.targetY;}
+    if(v.camera.targetZ!=null){VC.lookZ=v.camera.targetZ;if(_lastCfgTZ===null||v.camera.targetZ!==_lastCfgTZ)target.z=v.camera.targetZ;_lastCfgTZ=v.camera.targetZ;}
   }
   if(v.zoom){if(v.zoom.min!=null)VC.zoomMin=v.zoom.min;if(v.zoom.max!=null)VC.zoomMax=v.zoom.max;}
   if(v.idle){if(v.idle.speed!=null)VC.idleSpeed=v.idle.speed;if(v.idle.amplitude!=null)VC.idleAmp=v.idle.amplitude;if(v.idle.enabled!=null)toggles.idle=!!v.idle.enabled;}
@@ -911,6 +914,7 @@ function applyViewerConfig(v){
     if(v.background.saturation!=null&&v.background.saturation!==VC.bgSat){VC.bgSat=v.background.saturation;needsBgRebuild=true;}
     toggles.bgColorOverride=!!v.background.colorOverride;
     const hex=v.background.color;
+    _customBgHex=(hex&&hex.match(/^#[0-9a-fA-F]{6}$/))?hex:null;
     if(toggles.bgColorOverride&&hex&&hex.match(/^#[0-9a-fA-F]{6}$/)){
       scene.background=new THREE.Color(hex);
       const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
@@ -932,20 +936,24 @@ function applyViewerConfig(v){
 // EVENT PAGE LOGIC — fill, applyColor, modes
 // ═══════════════════════════════════════════════════
 function applyColor({r,g,b}){
-  const rt=document.documentElement,bR=Math.round(r*.08+10),bG=Math.round(g*.06+8),bB=Math.round(b*.05+7);
-  rt.style.setProperty('--bg','rgb('+bR+','+bG+','+bB+')');
-  rt.style.setProperty('--bgR',bR);rt.style.setProperty('--bgG',bG);rt.style.setProperty('--bgB',bB);
+  const rt=document.documentElement;
+  // Only apply accent-derived bg colors if no custom solid bg is set
+  if(!_customBgHex){
+    const bR=Math.round(r*.08+10),bG=Math.round(g*.06+8),bB=Math.round(b*.05+7);
+    rt.style.setProperty('--bg','rgb('+bR+','+bG+','+bB+')');
+    rt.style.setProperty('--bgR',bR);rt.style.setProperty('--bgG',bG);rt.style.setProperty('--bgB',bB);
+    if(!EC?.uiTint)applyUiTint(bR,bG,bB);
+    const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content='rgb('+bR+','+bG+','+bB+')';
+    document.querySelectorAll('body,html').forEach(el=>el.style.background='rgb('+bR+','+bG+','+bB+')');
+  }
   rt.style.setProperty('--accent','rgb('+r+','+g+','+b+')');
-  // Auto UI tint from bg color if no explicit override
-  if(!EC?.uiTint)applyUiTint(bR,bG,bB);
-  const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content='rgb('+bR+','+bG+','+bB+')';
-  document.querySelectorAll('body,html').forEach(el=>el.style.background='rgb('+bR+','+bG+','+bB+')');
   $('glow').style.background='radial-gradient(ellipse 80% 70% at 50% 50%,rgba('+r+','+g+','+b+',.30) 0%,rgba('+r+','+g+','+b+',.25) 10%,rgba('+r+','+g+','+b+',.18) 22%,rgba('+r+','+g+','+b+',.12) 34%,rgba('+r+','+g+','+b+',.07) 46%,rgba('+r+','+g+','+b+',.04) 58%,rgba('+r+','+g+','+b+',.015) 72%,transparent 90%)';
-  document.querySelectorAll('.cta,.sticky-b,.cbar-cta').forEach(el=>{el.style.background='rgba('+r+','+g+','+b+',.25)';el.style.borderColor='rgba('+r+','+g+','+b+',.35)';});
   document.querySelectorAll('.at.h').forEach(t=>{t.style.background='rgba('+r+','+g+','+b+',.1)';t.style.borderColor='rgba('+r+','+g+','+b+',.2)';t.style.color='rgb('+r+','+g+','+b+')';});
   const mo=document.querySelector('.dpill .mo');if(mo)mo.style.color='rgb('+r+','+g+','+b+')';
   document.querySelectorAll('.chip-a').forEach(el=>el.style.color='rgb('+r+','+g+','+b+')');
-  const pl=document.querySelector('.ft-t a');if(pl)pl.style.color='rgb('+r+','+g+','+b+')';
+  // Music, share, social icons — tint with accent
+  document.querySelectorAll('.chip.sm svg').forEach(el=>el.style.color='rgb('+r+','+g+','+b+')');
+  document.querySelectorAll('.soc').forEach(el=>{el.style.borderColor='rgba('+r+','+g+','+b+',.25)';el.style.color='rgb('+r+','+g+','+b+')';});
 }
 
 function applyUiTint(r,g,b){
@@ -965,12 +973,22 @@ function fill(e){
   // Chips
   if(e.time)$('tcTxt').textContent=(e.time.start||'')+(e.time.end?' – '+e.time.end:'');
   if(e.venue)$('vcTxt').textContent=e.venue.name||'';
-  // Lineup
-  if(e.lineup?.length){const lr=$('lu');lr.innerHTML='';e.lineup.forEach(a=>{const s=document.createElement('span');s.className='at'+(a.headliner?' h':'');s.textContent=a.name;lr.appendChild(s);});}
   // About
   $('abtD').textContent=e.description||'';
-  if(e.age)$('dAge').textContent=e.age;
-  if(e.lastEntry)$('dEnt').textContent=e.lastEntry;
+  $('abtD').style.display=e.description?'':'none';
+  // Details rows — build dynamically, hide if all empty
+  const dets=$('dets');dets.innerHTML='';
+  if(e.age){dets.innerHTML+='<div class="dr"><span class="dl">Age</span><span class="dv">'+e.age+'</span></div>';}
+  if(e.lastEntry){dets.innerHTML+='<div class="dr"><span class="dl">Last entry</span><span class="dv">'+e.lastEntry+'</span></div>';}
+  if(e.dressCode){dets.innerHTML+='<div class="dr"><span class="dl">Dress code</span><span class="dv">'+e.dressCode+'</span></div>';}
+  if(e.ticketPrice){dets.innerHTML+='<div class="dr"><span class="dl">Price</span><span class="dv">'+e.ticketPrice+'</span></div>';}
+  dets.style.display=dets.children.length?'':'none';
+  // Lineup
+  if(e.lineup?.length){const lr=$('lu');lr.innerHTML='';e.lineup.forEach(a=>{const s=document.createElement('span');s.className='at'+(a.headliner?' h':'');s.textContent=a.name;lr.appendChild(s);});$('lu').style.display='';}
+  else{$('lu').style.display='none';}
+  // Hide entire about section if nothing to show
+  const hasAbout=e.description||dets.children.length||(e.lineup?.length);
+  $('abt').style.display=hasAbout?'':'none';
   // CTAs
   if(e.ticketUrl){$('cta').href=e.ticketUrl;$('sBtn').href=e.ticketUrl;$('cbarCta').href=e.ticketUrl;$('cta').style.display='';$('sBtn').style.display='';$('cbarCta').style.display='';}
   else{$('cta').style.display='none';$('sBtn').style.display='none';$('cbarCta').style.display='none';}
@@ -1101,6 +1119,9 @@ window.addEventListener("message",(e)=>{
       } else if(msg.url){
         if(msg.viewer)applyViewerConfig(msg.viewer);loadSplat(msg.url);
       }
+      break;
+    case "clear-splat":
+      if(currentSplat){scene.remove(currentSplat);currentSplat.dispose();currentSplat=null;}
       break;
     case "transition":
       if(msg.buffer){
