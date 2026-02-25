@@ -529,6 +529,7 @@ const bgCtx = bgCanvas.getContext("2d", { willReadFrequently:true });
 let bgTexture=null, bgImageEl=null;
 
 function boxBlur(imageData, radius) {
+  // Kept as fallback but no longer used — canvas filter handles blur now
   const {data,width,height}=imageData; const r=Math.max(1,Math.round(radius));
   const tmp=new Uint8ClampedArray(data.length);
   for(let y=0;y<height;y++){for(let x=0;x<width;x++){let rr=0,gg=0,bb=0,cnt=0;
@@ -538,26 +539,24 @@ function boxBlur(imageData, radius) {
   data.set(tmp);
 }
 
+let _lastBgBlur=null,_lastBgBright=null,_lastBgSat=null,_lastBgImg=null;
 function updateBackground() {
   if(!bgImageEl)return;
+  // Skip if nothing changed
+  if(bgImageEl===_lastBgImg&&VC.bgBlur===_lastBgBlur&&VC.bgBright===_lastBgBright&&VC.bgSat===_lastBgSat&&bgTexture)return;
+  _lastBgImg=bgImageEl;_lastBgBlur=VC.bgBlur;_lastBgBright=VC.bgBright;_lastBgSat=VC.bgSat;
   const w=256,h=256;bgCanvas.width=w;bgCanvas.height=h;
-  bgCtx.drawImage(bgImageEl,0,0,w,h);
-  const imgData=bgCtx.getImageData(0,0,w,h);
-  const blurR=VC.bgBlur*0.5;
-  if(blurR>0){boxBlur(imgData,blurR);boxBlur(imgData,blurR);boxBlur(imgData,blurR);}
-  const d=imgData.data,brt=VC.bgBright,sat=VC.bgSat;
-  for(let i=0;i<d.length;i+=4){
-    let r=d[i]*brt,g=d[i+1]*brt,b=d[i+2]*brt;
-    const gray=0.299*r+0.587*g+0.114*b;
-    r=gray+sat*(r-gray);g=gray+sat*(g-gray);b=gray+sat*(b-gray);
-    d[i]=Math.max(0,Math.min(255,r));d[i+1]=Math.max(0,Math.min(255,g));d[i+2]=Math.max(0,Math.min(255,b));
-  }
-  bgCtx.putImageData(imgData,0,0);
+  // Use GPU-accelerated canvas filter instead of manual pixel blur
+  const blurPx=Math.round(VC.bgBlur*0.5);
+  bgCtx.filter='blur('+blurPx+'px) brightness('+VC.bgBright+') saturate('+VC.bgSat+')';
+  bgCtx.drawImage(bgImageEl,-blurPx,-blurPx,w+blurPx*2,h+blurPx*2);
+  bgCtx.filter='none';
   if(bgTexture)bgTexture.dispose();
   bgTexture=new THREE.CanvasTexture(bgCanvas);
   bgTexture.colorSpace=THREE.SRGBColorSpace;
   scene.background=bgTexture;
-  // Extract accent colour
+  // Extract accent colour from processed image
+  const imgData=bgCtx.getImageData(0,0,w,h);
   extractAccentFromBg(imgData);
 }
 function extractAccentFromBg(imgData){
@@ -881,8 +880,11 @@ applyAllToggles();
 // ═══════════════════════════════════════════════════
 let _lastCfgRadius=null,_lastCfgTX=null,_lastCfgTY=null,_lastCfgTZ=null;
 let _customBgHex=null; // tracks if user set a solid bg color
+let _prevToggles=null; // tracks toggle state for dirty checking
 function applyViewerConfig(v){
   if(!v)return;
+  // Snapshot toggle state before applying
+  const togBefore=JSON.stringify(toggles);
   if(v.camera){
     if(v.camera.radius!=null){VC.radius=v.camera.radius;if(_lastCfgRadius===null||v.camera.radius!==_lastCfgRadius){baseRadius=v.camera.radius;}_lastCfgRadius=v.camera.radius;}
     if(v.camera.fov!=null&&v.camera.fov!==VC.fov){VC.fov=v.camera.fov;camera.fov=v.camera.fov;camera.updateProjectionMatrix();}
@@ -924,14 +926,19 @@ function applyViewerConfig(v){
   if(v.gyroscope&&v.gyroscope.strength!=null)VC.gyroStrength=v.gyroscope.strength;
   if(v.splatTransform&&currentSplat){if(v.splatTransform.posX!=null)currentSplat.position.x=v.splatTransform.posX;if(v.splatTransform.posY!=null)currentSplat.position.y=v.splatTransform.posY;if(v.splatTransform.posZ!=null)currentSplat.position.z=v.splatTransform.posZ;if(v.splatTransform.scale!=null)currentSplat.scale.setScalar(v.splatTransform.scale);}
   if(v.reveal&&v.reveal.duration!=null)VC.revealDuration=v.reveal.duration;
-  applyAllToggles();
+  // Only apply toggles if any toggle state actually changed
+  if(JSON.stringify(toggles)!==togBefore)applyAllToggles();
 }
 
 
 // ═══════════════════════════════════════════════════
 // EVENT PAGE LOGIC — fill, applyColor, modes
 // ═══════════════════════════════════════════════════
+// Cached element refs for applyColor (stable elements that don't get rebuilt)
+let _acChipAs=null,_acChipSvgs=null,_acSocs=null,_acMo=null;
+function _initColorCache(){if(_acChipAs)return;_acChipAs=document.querySelectorAll('.chip-a');_acChipSvgs=document.querySelectorAll('.chip.sm svg');_acSocs=document.querySelectorAll('.soc');_acMo=document.querySelector('.dpill .mo');}
 function applyColor({r,g,b}){
+  _initColorCache();
   const rt=document.documentElement;
   // Only apply accent-derived bg colors if no custom solid bg is set
   if(!_customBgHex){
@@ -940,16 +947,18 @@ function applyColor({r,g,b}){
     rt.style.setProperty('--bgR',bR);rt.style.setProperty('--bgG',bG);rt.style.setProperty('--bgB',bB);
     if(!EC?.uiTint)applyUiTint(bR,bG,bB);
     const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content='rgb('+bR+','+bG+','+bB+')';
-    document.querySelectorAll('body,html').forEach(el=>el.style.background='rgb('+bR+','+bG+','+bB+')');
+    document.body.style.background='rgb('+bR+','+bG+','+bB+')';
+    document.documentElement.style.background='rgb('+bR+','+bG+','+bB+')';
   }
   rt.style.setProperty('--accent','rgb('+r+','+g+','+b+')');
   $('glow').style.background='radial-gradient(ellipse 80% 70% at 50% 50%,rgba('+r+','+g+','+b+',.30) 0%,rgba('+r+','+g+','+b+',.25) 10%,rgba('+r+','+g+','+b+',.18) 22%,rgba('+r+','+g+','+b+',.12) 34%,rgba('+r+','+g+','+b+',.07) 46%,rgba('+r+','+g+','+b+',.04) 58%,rgba('+r+','+g+','+b+',.015) 72%,transparent 90%)';
+  // Headliner tags get rebuilt by fill(), so must query fresh
   document.querySelectorAll('.at.h').forEach(t=>{t.style.background='rgba('+r+','+g+','+b+',.1)';t.style.borderColor='rgba('+r+','+g+','+b+',.2)';t.style.color='rgb('+r+','+g+','+b+')';});
-  const mo=document.querySelector('.dpill .mo');if(mo)mo.style.color='rgb('+r+','+g+','+b+')';
-  document.querySelectorAll('.chip-a').forEach(el=>el.style.color='rgb('+r+','+g+','+b+')');
+  if(_acMo)_acMo.style.color='rgb('+r+','+g+','+b+')';
+  _acChipAs.forEach(el=>el.style.color='rgb('+r+','+g+','+b+')');
   // Music, share, social icons — tint with accent
-  document.querySelectorAll('.chip.sm svg').forEach(el=>el.style.color='rgb('+r+','+g+','+b+')');
-  document.querySelectorAll('.soc').forEach(el=>{el.style.borderColor='rgba('+r+','+g+','+b+',.25)';el.style.color='rgb('+r+','+g+','+b+')';});
+  _acChipSvgs.forEach(el=>el.style.color='rgb('+r+','+g+','+b+')');
+  _acSocs.forEach(el=>{el.style.borderColor='rgba('+r+','+g+','+b+',.25)';el.style.color='rgb('+r+','+g+','+b+')';});
 }
 
 function applyUiTint(r,g,b){
@@ -957,6 +966,7 @@ function applyUiTint(r,g,b){
   rt.style.setProperty('--uiR',r);rt.style.setProperty('--uiG',g);rt.style.setProperty('--uiB',b);
 }
 
+let _fillCache={detsSig:'',luSig:'',pastSig:'',ctaSig:'',socSig:'',typoSig:''};
 function fill(e){
   if(!e)return;
   EC=e;
@@ -975,47 +985,65 @@ function fill(e){
   // Set preview — first sentence or first ~60 chars
   if(e.description){const d=e.description,dot=d.indexOf('.');const cut=dot>0&&dot<80?dot:Math.min(d.length,60);const preview=d.slice(0,cut).trim();$('abtPreview').textContent=preview+(d.length>cut?'…':'');}
   else{$('abtPreview').textContent='';}
-  // Details rows — build dynamically, hide if all empty
-  const dets=$('dets');dets.innerHTML='';
-  if(e.age){dets.innerHTML+='<div class="dr"><span class="dl">Age</span><span class="dv">'+e.age+'</span></div>';}
-  if(e.lastEntry){dets.innerHTML+='<div class="dr"><span class="dl">Last entry</span><span class="dv">'+e.lastEntry+'</span></div>';}
-  if(e.dressCode){dets.innerHTML+='<div class="dr"><span class="dl">Dress code</span><span class="dv">'+e.dressCode+'</span></div>';}
-  if(e.ticketPrice){dets.innerHTML+='<div class="dr"><span class="dl">Price</span><span class="dv">'+e.ticketPrice+'</span></div>';}
-  dets.style.display=dets.children.length?'':'none';
-  // Lineup
-  if(e.lineup?.length){const lr=$('lu');lr.innerHTML='';e.lineup.forEach(a=>{const s=document.createElement('span');s.className='at'+(a.headliner?' h':'');s.textContent=a.name;lr.appendChild(s);});$('lu').style.display='';}
-  else{$('lu').style.display='none';}
+  // Details rows — only rebuild if data changed
+  const detsSig=(e.age||'')+'|'+(e.lastEntry||'')+'|'+(e.dressCode||'')+'|'+(e.ticketPrice||'');
+  if(detsSig!==_fillCache.detsSig){_fillCache.detsSig=detsSig;
+    const dets=$('dets');dets.innerHTML='';
+    if(e.age){dets.innerHTML+='<div class="dr"><span class="dl">Age</span><span class="dv">'+e.age+'</span></div>';}
+    if(e.lastEntry){dets.innerHTML+='<div class="dr"><span class="dl">Last entry</span><span class="dv">'+e.lastEntry+'</span></div>';}
+    if(e.dressCode){dets.innerHTML+='<div class="dr"><span class="dl">Dress code</span><span class="dv">'+e.dressCode+'</span></div>';}
+    if(e.ticketPrice){dets.innerHTML+='<div class="dr"><span class="dl">Price</span><span class="dv">'+e.ticketPrice+'</span></div>';}
+    dets.style.display=dets.children.length?'':'none';
+  }
+  // Lineup — only rebuild if data changed
+  const luSig=e.lineup?e.lineup.map(a=>a.name+'~'+(a.headliner?1:0)).join('|'):'';
+  if(luSig!==_fillCache.luSig){_fillCache.luSig=luSig;
+    if(e.lineup?.length){const lr=$('lu');lr.innerHTML='';e.lineup.forEach(a=>{const s=document.createElement('span');s.className='at'+(a.headliner?' h':'');s.textContent=a.name;lr.appendChild(s);});$('lu').style.display='';}
+    else{$('lu').style.display='none';}
+  }
   // Hide entire about section if nothing to show
-  const hasAbout=e.description||dets.children.length||(e.lineup?.length);
+  const hasAbout=e.description||$('dets').children.length||(e.lineup?.length);
   $('abt').style.display=hasAbout?'':'none';
-  // CTAs
-  if(e.ticketUrl){$('cta').href=e.ticketUrl;$('sBtn').href=e.ticketUrl;$('cbarCta').href=e.ticketUrl;$('cta').style.display='';$('sBtn').style.display='';$('cbarCta').style.display='';}
-  else{$('cta').style.display='none';$('sBtn').style.display='none';$('cbarCta').style.display='none';}
+  // CTAs — only update if ticket URL changed
+  const ctaSig=e.ticketUrl||'';
+  if(ctaSig!==_fillCache.ctaSig){_fillCache.ctaSig=ctaSig;
+    if(e.ticketUrl){$('cta').href=e.ticketUrl;$('sBtn').href=e.ticketUrl;$('cbarCta').href=e.ticketUrl;$('cta').style.display='';$('sBtn').style.display='';$('cbarCta').style.display='';}
+    else{$('cta').style.display='none';$('sBtn').style.display='none';$('cbarCta').style.display='none';}
+  }
   $('cbarLabel').textContent=e.promoter||'';$('cbarTitle').textContent=e.name||'';
-  // Past events
-  if(e.pastEvents?.length){const pg=$('pgrid');pg.innerHTML='';const hues=[0,220,140];
-    e.pastEvents.forEach((pe,i)=>{const h=hues[i%3],c=document.createElement('div');c.className='pcard';c.dataset.title=pe.title;c.dataset.date=pe.date||'';
-      const hasImg=pe.image&&pe.image.length>0;
-      c.innerHTML=(hasImg?'<img src="'+pe.image+'" alt="'+pe.title+'"/>':'<div class="pcard-bg" style="background:linear-gradient(145deg,hsla('+h+',60%,50%,.15),hsla('+h+',30%,8%,.95))"></div>')+'<div class="pcard-i"><div class="pcard-t">'+pe.title+'</div><div class="pcard-d">'+(pe.date||'')+'</div></div>';
-      pg.appendChild(c);});$('pastSec').style.display='';}
-  else{$('pastSec').style.display='none';}
-  // Socials
-  if(e.socials){const links=$('socs')?.querySelectorAll('a');
-    if(e.socials.instagram&&links?.[0])links[0].href=e.socials.instagram;
-    if(e.socials.twitter&&links?.[1])links[1].href=e.socials.twitter;
-    if(e.socials.tiktok&&links?.[2])links[2].href=e.socials.tiktok;}
+  // Past events — only rebuild if data changed
+  const pastSig=e.pastEvents?e.pastEvents.map(p=>p.title+'~'+p.date+'~'+(p.image||'')).join('|'):'';
+  if(pastSig!==_fillCache.pastSig){_fillCache.pastSig=pastSig;
+    if(e.pastEvents?.length){const pg=$('pgrid');pg.innerHTML='';const hues=[0,220,140];
+      e.pastEvents.forEach((pe,i)=>{const h=hues[i%3],c=document.createElement('div');c.className='pcard';c.dataset.title=pe.title;c.dataset.date=pe.date||'';
+        const hasImg=pe.image&&pe.image.length>0;
+        c.innerHTML=(hasImg?'<img src="'+pe.image+'" alt="'+pe.title+'"/>':'<div class="pcard-bg" style="background:linear-gradient(145deg,hsla('+h+',60%,50%,.15),hsla('+h+',30%,8%,.95))"></div>')+'<div class="pcard-i"><div class="pcard-t">'+pe.title+'</div><div class="pcard-d">'+(pe.date||'')+'</div></div>';
+        pg.appendChild(c);});$('pastSec').style.display='';}
+    else{$('pastSec').style.display='none';}
+  }
+  // Socials — only update if changed
+  const socSig=(e.socials?.instagram||'')+'|'+(e.socials?.twitter||'')+'|'+(e.socials?.tiktok||'');
+  if(socSig!==_fillCache.socSig){_fillCache.socSig=socSig;
+    if(e.socials){const links=$('socs')?.querySelectorAll('a');
+      if(e.socials.instagram&&links?.[0])links[0].href=e.socials.instagram;
+      if(e.socials.twitter&&links?.[1])links[1].href=e.socials.twitter;
+      if(e.socials.tiktok&&links?.[2])links[2].href=e.socials.tiktok;}
+  }
   // UI Tint
   if(e.uiTint&&e.uiTint.match(/^#[0-9a-fA-F]{6}$/)){const h=e.uiTint;applyUiTint(parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16));}
   // Accent
   if(e.accentColorOverride){const h=e.accentColorOverride;applyColor({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});}
   // CTA custom color
   if(e.ctaColor){document.querySelectorAll('.cta,.sticky-b,.cbar-cta').forEach(el=>{el.style.background=e.ctaColor;if(e.ctaBorder)el.style.borderColor=e.ctaBorder;});}
-  // Typography
-  if(e.typography){const t=e.typography,r=document.documentElement.style;
-    if(t.title){if(t.title.font)r.setProperty('--tf',t.title.font);if(t.title.weight)r.setProperty('--tw',t.title.weight);if(t.title.color)r.setProperty('--tc',t.title.color);}
-    if(t.labels){if(t.labels.font)r.setProperty('--lf',t.labels.font);if(t.labels.weight)r.setProperty('--lw',t.labels.weight);if(t.labels.color)r.setProperty('--lc',t.labels.color);}
-    if(t.body){if(t.body.font)r.setProperty('--bf',t.body.font);if(t.body.weight)r.setProperty('--bw',t.body.weight);if(t.body.color)r.setProperty('--bc',t.body.color);}
-    if(t.buttons){if(t.buttons.font)r.setProperty('--btf',t.buttons.font);if(t.buttons.weight)r.setProperty('--btw',t.buttons.weight);if(t.buttons.color)r.setProperty('--btc',t.buttons.color);}
+  // Typography — only update if changed
+  if(e.typography){const typoSig=JSON.stringify(e.typography);
+    if(typoSig!==_fillCache.typoSig){_fillCache.typoSig=typoSig;
+      const t=e.typography,r=document.documentElement.style;
+      if(t.title){if(t.title.font)r.setProperty('--tf',t.title.font);if(t.title.weight)r.setProperty('--tw',t.title.weight);if(t.title.color)r.setProperty('--tc',t.title.color);}
+      if(t.labels){if(t.labels.font)r.setProperty('--lf',t.labels.font);if(t.labels.weight)r.setProperty('--lw',t.labels.weight);if(t.labels.color)r.setProperty('--lc',t.labels.color);}
+      if(t.body){if(t.body.font)r.setProperty('--bf',t.body.font);if(t.body.weight)r.setProperty('--bw',t.body.weight);if(t.body.color)r.setProperty('--bc',t.body.color);}
+      if(t.buttons){if(t.buttons.font)r.setProperty('--btf',t.buttons.font);if(t.buttons.weight)r.setProperty('--btw',t.buttons.weight);if(t.buttons.color)r.setProperty('--btc',t.buttons.color);}
+    }
   }
 }
 
