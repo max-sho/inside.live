@@ -84,13 +84,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;hei
 .preset-chip{padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);font:inherit;font-size:9px;cursor:pointer;position:relative}
 .preset-chip:hover{border-color:#444;color:var(--text)}.preset-chip.active{border-color:var(--accent);color:var(--accent)}
 .preset-chip .x{margin-left:4px;color:#666;font-size:10px}.preset-chip .x:hover{color:#f44}
-/* Typography groups */
-.typo-grp{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}.typo-grp:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.typo-grp-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:5px;font-weight:600}
-.typo-grp-hint{font-size:8px;color:var(--dim);opacity:.5;margin-bottom:5px}
-.typo-row{display:flex;gap:5px;align-items:center}
-.typo-row select{flex:1;min-width:0;padding:5px 22px 5px 6px;background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);font:inherit;font-size:10px;outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:8px}
-.typo-row .color-pick{width:26px;height:26px;border-radius:6px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -308,45 +301,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;hei
         <div class="color-row"><div class="color-pick"><input type="color" id="ctaPick" value="#ff4d00"></div><input type="text" id="f-ctacol" placeholder="Default: matches accent" style="flex:1;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:11px;outline:none"></div>
         <div class="hint">Override the GET TICKETS button colour</div>
       </div></div>
-    <div class="sec" id="sec-type"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Typography</span></div>
-      <div class="sec-body">
-        <div class="typo-grp">
-          <div class="typo-grp-label">Title</div>
-          <div class="typo-grp-hint">Event name, date number</div>
-          <div class="typo-row">
-            <select id="ty-tf"><option value="'Instrument Sans',sans-serif">Instrument Sans</option><option value="'Space Mono',monospace">Space Mono</option><option value="'Inter',sans-serif">Inter</option><option value="'DM Sans',sans-serif">DM Sans</option><option value="'Sora',sans-serif">Sora</option><option value="'Outfit',sans-serif">Outfit</option><option value="'Plus Jakarta Sans',sans-serif">Plus Jakarta Sans</option><option value="'Bebas Neue',sans-serif">Bebas Neue</option><option value="system-ui,sans-serif">System</option></select>
-            <select id="ty-tw"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semi</option><option value="700" selected>Bold</option></select>
-            <div class="color-pick"><input type="color" id="ty-tc" value="#f5f5f3"></div>
-          </div>
-        </div>
-        <div class="typo-grp">
-          <div class="typo-grp-label">Labels</div>
-          <div class="typo-grp-hint">Promoter, weekday, month</div>
-          <div class="typo-row">
-            <select id="ty-lf"><option value="'Instrument Sans',sans-serif">Instrument Sans</option><option value="'Space Mono',monospace" selected>Space Mono</option><option value="'Inter',sans-serif">Inter</option><option value="'DM Sans',sans-serif">DM Sans</option><option value="'Sora',sans-serif">Sora</option><option value="'Outfit',sans-serif">Outfit</option><option value="'Plus Jakarta Sans',sans-serif">Plus Jakarta Sans</option><option value="'Bebas Neue',sans-serif">Bebas Neue</option><option value="system-ui,sans-serif">System</option></select>
-            <select id="ty-lw"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semi</option><option value="700" selected>Bold</option></select>
-            <div class="color-pick"><input type="color" id="ty-lc" value="#bfbfbf"></div>
-          </div>
-        </div>
-        <div class="typo-grp">
-          <div class="typo-grp-label">Body</div>
-          <div class="typo-grp-hint">Description, details, chips</div>
-          <div class="typo-row">
-            <select id="ty-bf"><option value="'Instrument Sans',sans-serif">Instrument Sans</option><option value="'Space Mono',monospace">Space Mono</option><option value="'Inter',sans-serif">Inter</option><option value="'DM Sans',sans-serif">DM Sans</option><option value="'Sora',sans-serif">Sora</option><option value="'Outfit',sans-serif">Outfit</option><option value="'Plus Jakarta Sans',sans-serif">Plus Jakarta Sans</option><option value="'Bebas Neue',sans-serif">Bebas Neue</option><option value="system-ui,sans-serif">System</option></select>
-            <select id="ty-bw"><option value="400" selected>Regular</option><option value="500">Medium</option><option value="600">Semi</option><option value="700">Bold</option></select>
-            <div class="color-pick"><input type="color" id="ty-bc" value="#bfbfbf"></div>
-          </div>
-        </div>
-        <div class="typo-grp">
-          <div class="typo-grp-label">Buttons</div>
-          <div class="typo-grp-hint">CTA text</div>
-          <div class="typo-row">
-            <select id="ty-btf"><option value="'Instrument Sans',sans-serif">Instrument Sans</option><option value="'Space Mono',monospace" selected>Space Mono</option><option value="'Inter',sans-serif">Inter</option><option value="'DM Sans',sans-serif">DM Sans</option><option value="'Sora',sans-serif">Sora</option><option value="'Outfit',sans-serif">Outfit</option><option value="'Plus Jakarta Sans',sans-serif">Plus Jakarta Sans</option><option value="'Bebas Neue',sans-serif">Bebas Neue</option><option value="system-ui,sans-serif">System</option></select>
-            <select id="ty-btw"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semi</option><option value="700" selected>Bold</option></select>
-            <div class="color-pick"><input type="color" id="ty-btc" value="#ffffff"></div>
-          </div>
-        </div>
-      </div></div>
     <div class="sec" id="sec-socials"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Socials</span></div>
       <div class="sec-body">
         <div class="field"><label>Instagram</label><input type="url" id="f-ig" placeholder="https://instagram.com/..."></div>
@@ -441,8 +395,6 @@ $('f-ctacol').addEventListener('input',()=>pushEventData());
 
 // ═══ EVENT FIELDS ═══
 'f-name f-promoter f-date f-start f-end f-venue f-venueaddr f-genre f-desc f-ticket f-age f-entry f-ig f-tw f-tt f-spotify f-apple f-soundcloud'.split(' ').forEach(id=>{$(id)?.addEventListener('input',()=>pushEventData());});
-'ty-tf ty-tw ty-lf ty-lw ty-bf ty-bw ty-btf ty-btw'.split(' ').forEach(id=>{$(id)?.addEventListener('change',()=>pushEventData());});
-'ty-tc ty-lc ty-bc ty-btc'.split(' ').forEach(id=>{$(id)?.addEventListener('input',()=>pushEventData());});
 
 // ═══ ASSETS ═══
 const assets={mainSog:null,memorySogs:{},background:null,logo:null,pastImages:{}};
@@ -527,7 +479,7 @@ function getEventConfig(){
   const pe=[];document.querySelectorAll('#pastList .past-row').forEach((r)=>{const i=parseInt(r.dataset.idx||0);pe.push({title:r.querySelector('[data-field="title"]')?.value||'',date:r.querySelector('[data-field="date"]')?.value||'',image:assets.pastImages[i]||'',hasSplat:!!assets.memorySogs[i]});});
   const ctaVal=$('f-ctacol').value;let ctaBg=null,ctaBdr=null;
   if(ctaVal&&ctaVal.match(/^#[0-9a-fA-F]{6}$/)){const r=parseInt(ctaVal.slice(1,3),16),g=parseInt(ctaVal.slice(3,5),16),b=parseInt(ctaVal.slice(5,7),16);ctaBg=`rgba(${r},${g},${b},.18)`;ctaBdr=`rgba(${r},${g},${b},.3)`;}
-  return{name:$('f-name').value,promoter:$('f-promoter').value,promoterLogo:assets.logo||'',date:$('f-date').value,time:{start:$('f-start').value,end:$('f-end').value},venue:{name:$('f-venue').value,address:$('f-venueaddr').value},genre:$('f-genre').value,description:$('f-desc').value,age:$('f-age').value,lastEntry:$('f-entry').value,ticketUrl:$('f-ticket').value,lineup:lu,pastEvents:pe,socials:{instagram:$('f-ig').value,twitter:$('f-tw').value,tiktok:$('f-tt').value},music:{spotify:$('f-spotify').value,apple:$('f-apple').value,soundcloud:$('f-soundcloud').value},uiTint:$('f-uitint').value||null,accentColorOverride:$('f-accent').value||null,ctaColor:ctaBg,ctaBorder:ctaBdr,typography:{title:{font:$('ty-tf').value,weight:$('ty-tw').value,color:$('ty-tc').value},labels:{font:$('ty-lf').value,weight:$('ty-lw').value,color:$('ty-lc').value},body:{font:$('ty-bf').value,weight:$('ty-bw').value,color:$('ty-bc').value},buttons:{font:$('ty-btf').value,weight:$('ty-btw').value,color:$('ty-btc').value}}};}
+  return{name:$('f-name').value,promoter:$('f-promoter').value,promoterLogo:assets.logo||'',date:$('f-date').value,time:{start:$('f-start').value,end:$('f-end').value},venue:{name:$('f-venue').value,address:$('f-venueaddr').value},genre:$('f-genre').value,description:$('f-desc').value,age:$('f-age').value,lastEntry:$('f-entry').value,ticketUrl:$('f-ticket').value,lineup:lu,pastEvents:pe,socials:{instagram:$('f-ig').value,twitter:$('f-tw').value,tiktok:$('f-tt').value},music:{spotify:$('f-spotify').value,apple:$('f-apple').value,soundcloud:$('f-soundcloud').value},uiTint:$('f-uitint').value||null,accentColorOverride:$('f-accent').value||null,ctaColor:ctaBg,ctaBorder:ctaBdr};}
 
 let pushT=null;
 function pushConfig(){clearTimeout(pushT);pushT=setTimeout(()=>sendP({type:'viewer-update',viewer:getViewerConfig()}),50);}
@@ -642,8 +594,7 @@ function applyImport(cfg){const v=cfg.viewer;if(!v)return;
   for(const[k,val]of Object.entries(tm)){if(val==null)continue;toggles[k]=val;const el=document.querySelector(`[data-tog="${k}"]`);if(el)el.classList.toggle('on',val);const sl=document.querySelector(`[data-fx="${k}"]`);if(sl)sl.classList.toggle('disabled',!val);}
   if(v.reveal?.type)$('sel-reveal').value=v.reveal.type;if(v.transitions?.type)$('sel-trans').value=v.transitions.type;
   if(v.background?.color){$('f-bgcol').value=v.background.color;if(v.background.color.match(/^#/))$('bgColPick').value=v.background.color;}
-  const ev=cfg.event;if(ev){if(ev.name)$('f-name').value=ev.name;if(ev.promoter)$('f-promoter').value=ev.promoter;if(ev.date)$('f-date').value=ev.date;if(ev.time){$('f-start').value=ev.time.start||'';$('f-end').value=ev.time.end||'';}if(ev.venue){$('f-venue').value=ev.venue.name||'';$('f-venueaddr').value=ev.venue.address||'';}if(ev.genre)$('f-genre').value=ev.genre;if(ev.description)$('f-desc').value=ev.description;if(ev.ticketUrl)$('f-ticket').value=ev.ticketUrl;if(ev.age)$('f-age').value=ev.age;if(ev.lastEntry)$('f-entry').value=ev.lastEntry;if(ev.socials){$('f-ig').value=ev.socials.instagram||'';$('f-tw').value=ev.socials.twitter||'';$('f-tt').value=ev.socials.tiktok||'';}if(ev.music){$('f-spotify').value=ev.music.spotify||'';$('f-apple').value=ev.music.apple||'';$('f-soundcloud').value=ev.music.soundcloud||'';}if(ev.uiTint){$('f-uitint').value=ev.uiTint;if(ev.uiTint.match(/^#/))$('uiTintPick').value=ev.uiTint;}if(ev.accentColorOverride){$('f-accent').value=ev.accentColorOverride;if(ev.accentColorOverride.match(/^#/))$('accentPick').value=ev.accentColorOverride;}
-    if(ev.typography){const t=ev.typography;if(t.title){if(t.title.font)$('ty-tf').value=t.title.font;if(t.title.weight)$('ty-tw').value=t.title.weight;if(t.title.color)$('ty-tc').value=t.title.color;}if(t.labels){if(t.labels.font)$('ty-lf').value=t.labels.font;if(t.labels.weight)$('ty-lw').value=t.labels.weight;if(t.labels.color)$('ty-lc').value=t.labels.color;}if(t.body){if(t.body.font)$('ty-bf').value=t.body.font;if(t.body.weight)$('ty-bw').value=t.body.weight;if(t.body.color)$('ty-bc').value=t.body.color;}if(t.buttons){if(t.buttons.font)$('ty-btf').value=t.buttons.font;if(t.buttons.weight)$('ty-btw').value=t.buttons.weight;if(t.buttons.color)$('ty-btc').value=t.buttons.color;}}}
+  const ev=cfg.event;if(ev){if(ev.name)$('f-name').value=ev.name;if(ev.promoter)$('f-promoter').value=ev.promoter;if(ev.date)$('f-date').value=ev.date;if(ev.time){$('f-start').value=ev.time.start||'';$('f-end').value=ev.time.end||'';}if(ev.venue){$('f-venue').value=ev.venue.name||'';$('f-venueaddr').value=ev.venue.address||'';}if(ev.genre)$('f-genre').value=ev.genre;if(ev.description)$('f-desc').value=ev.description;if(ev.ticketUrl)$('f-ticket').value=ev.ticketUrl;if(ev.age)$('f-age').value=ev.age;if(ev.lastEntry)$('f-entry').value=ev.lastEntry;if(ev.socials){$('f-ig').value=ev.socials.instagram||'';$('f-tw').value=ev.socials.twitter||'';$('f-tt').value=ev.socials.tiktok||'';}if(ev.music){$('f-spotify').value=ev.music.spotify||'';$('f-apple').value=ev.music.apple||'';$('f-soundcloud').value=ev.music.soundcloud||'';}if(ev.uiTint){$('f-uitint').value=ev.uiTint;if(ev.uiTint.match(/^#/))$('uiTintPick').value=ev.uiTint;}if(ev.accentColorOverride){$('f-accent').value=ev.accentColorOverride;if(ev.accentColorOverride.match(/^#/))$('accentPick').value=ev.accentColorOverride;}}
   pushEventData();pushConfig();}
 
 // ═══ COPY JSON (quick clipboard) ═══
