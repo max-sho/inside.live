@@ -160,7 +160,7 @@ html,body{background:#000;color:var(--text);font-family:'Instrument Sans',-apple
 .soc:active{background:rgba(255,255,255,.1);color:var(--text);transform:scale(.92)}
 
 /* Footer */
-.ft{padding:16px 16px 36px;text-align:center;position:relative;padding-bottom:calc(50px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent 0%,#000 70%)}
+.ft{padding:16px 16px 36px;text-align:center}
 .ft-t{font-size:10.5px;color:var(--dim);letter-spacing:.5px}
 .ft-t a{color:#f8571d;text-decoration:none;font-weight:600}
 
@@ -499,13 +499,13 @@ const vm = $('vm');
 function getVmSize(){ const w=vm.clientWidth||window.innerWidth; const h=vm.clientHeight||window.innerHeight; return {w:Math.max(w,1),h:Math.max(h,1)}; }
 const _sz = getVmSize();
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0x14100e);
 const camera = new THREE.PerspectiveCamera(VC.fov, _sz.w / _sz.h, 0.01, 100);
 
 const renderer = new THREE.WebGLRenderer({ antialias:false, alpha:false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(_sz.w, _sz.h);
-renderer.setClearColor(0x000000, 1);
+renderer.setClearColor(0x0a0a0a, 1);
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 renderer.domElement.style.display = 'block';
@@ -1108,7 +1108,7 @@ window.addEventListener("message",(e)=>{
       if(msg.assetType==="background"){
         const imgSrc=msg.dataUrl||msg.url;
         if(imgSrc){const img=new Image();img.crossOrigin="anonymous";img.onload=()=>{bgImageEl=img;bgTexture=null;if(!toggles.bgColorOverride)updateBackground();};img.src=imgSrc;}
-        else{bgImageEl=null;if(bgTexture){bgTexture.dispose();bgTexture=null;}if(!toggles.bgColorOverride)scene.background=new THREE.Color(0x000000);}
+        else{bgImageEl=null;if(bgTexture){bgTexture.dispose();bgTexture=null;}if(!toggles.bgColorOverride)scene.background=new THREE.Color(0x14100e);}
       }
       if(msg.assetType==="logo"){const src=msg.dataUrl||msg.url;if(src){$('pimg').src=src;$('pid').style.display='';}else{$('pid').style.display='none';}}
       break;
