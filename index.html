@@ -36,7 +36,8 @@
   --gl-bg:rgba(var(--uiR),var(--uiG),var(--uiB),.78);--gl-bdr:rgba(255,255,255,.22);
   --r:16px;--r-sm:12px
 }
-html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none}
+html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 
 /* ── Glass ── */
 .g{position:relative;background:var(--gl-bg);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--gl-bdr);border-radius:var(--r);box-shadow:0 .5px 0 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.25);overflow:hidden}
@@ -79,20 +80,17 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
   will-change:opacity,transform;
 }
 .content::before{
-  content:'';position:absolute;top:0;left:-100vw;right:-100vw;
+  content:'';position:absolute;top:calc(65dvh - 200px);left:-100vw;right:-100vw;
   bottom:0;z-index:-1;pointer-events:none;
   background:linear-gradient(to bottom,
-    transparent 0%,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.02) 100px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.06) 160px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.14) 220px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.26) 280px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.42) 340px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.60) 400px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.78) 460px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.90) 520px,
-    rgba(var(--bgR),var(--bgG),var(--bgB),.97) 580px,
-    rgb(var(--bgR),var(--bgG),var(--bgB)) 640px
+    transparent 0px,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.04) 40px,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.12) 80px,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.28) 120px,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.50) 150px,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.72) 175px,
+    rgba(var(--bgR),var(--bgG),var(--bgB),.90) 195px,
+    rgb(var(--bgR),var(--bgG),var(--bgB)) 220px
   );
 }
 
@@ -1082,6 +1080,8 @@ function wire(){
   const inCta=$('cta');
   if(inCta)new IntersectionObserver(([en])=>{if(mode==='info')sticky.classList.toggle('on',!en.isIntersecting);else sticky.classList.remove('on');},{threshold:0,rootMargin:'0px 0px -56px 0px'}).observe(inCta);
   $('heroTap')?.addEventListener('click',()=>{if(mode==='info')enterCinema();});
+  // Also handle clicks on the content padding area (above actual cards) — needed because .content z-index sits above .hero-tap
+  $('content')?.addEventListener('click',(ev)=>{if(mode!=='info')return;const first=$('content').firstElementChild;if(first&&ev.clientY<first.getBoundingClientRect().top)enterCinema();});
   $('cbar')?.addEventListener('click',ev=>{if(ev.target.closest('.cbar-cta')||ev.target.closest('.cbar-home')||ev.target.closest('.cbar-arr'))return;if(mode==='cinema')exitToInfo();});
   $('cbarHome')?.addEventListener('click',()=>{if(mode==='memory')exitToInfo();});
   $('cbarPrev').onclick=()=>{if(mode==='memory')enterMemory(memoryIdx-1);};
