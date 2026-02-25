@@ -68,12 +68,12 @@ html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-
 @keyframes fadeC{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
 
 /* ── Hero tap zone (triggers cinema mode) ── */
-.hero-tap{position:absolute;inset:0;bottom:42dvh;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero-tap{position:absolute;inset:0;bottom:35dvh;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 /* ── Content (info mode — default) ── */
 .content{
   position:relative;z-index:3;
-  padding:58dvh 16px 16px;
+  padding:65dvh 16px 16px;
   display:flex;flex-direction:column;gap:8px;
   transition:opacity .45s cubic-bezier(.16,1,.3,1),transform .45s cubic-bezier(.16,1,.3,1);
   will-change:opacity,transform;
@@ -470,7 +470,7 @@ const VC = {
   fadeRadius:5.0, fadeSoft:1.2,
   focalDist:2.5, aperture:0.003, blur:0.08,
   bgBlur:50, bgBright:0.4, bgSat:1.2,
-  gyroStrength:0.15, gyroMaxOffset:0.25, gyroSmoothing:0.08,
+  gyroStrength:0.35, gyroMaxOffset:0.6, gyroSmoothing:0.12,
   zoomMin:0.5, zoomMax:6,
   idleSpeed:0.15, idleAmp:0.04,
   revealDuration:2.5,
@@ -543,7 +543,7 @@ let _lastBgBlur=null,_lastBgBright=null,_lastBgSat=null,_lastBgImg=null;
 function updateBackground() {
   if(!bgImageEl)return;
   // Skip if nothing changed
-  if(bgImageEl===_lastBgImg&&VC.bgBlur===_lastBgBlur&&VC.bgBright===_lastBgBright&&VC.bgSat===_lastBgSat&&bgTexture)return;
+  if(bgImageEl===_lastBgImg&&VC.bgBlur===_lastBgBlur&&VC.bgBright===_lastBgBright&&VC.bgSat===_lastBgSat&&bgTexture){if(scene.background!==bgTexture)scene.background=bgTexture;return;}
   _lastBgImg=bgImageEl;_lastBgBlur=VC.bgBlur;_lastBgBright=VC.bgBright;_lastBgSat=VC.bgSat;
   const w=256,h=256;bgCanvas.width=w;bgCanvas.height=h;
   // Use GPU-accelerated canvas filter instead of manual pixel blur
@@ -880,11 +880,8 @@ applyAllToggles();
 // ═══════════════════════════════════════════════════
 let _lastCfgRadius=null,_lastCfgTX=null,_lastCfgTY=null,_lastCfgTZ=null;
 let _customBgHex=null; // tracks if user set a solid bg color
-let _prevToggles=null; // tracks toggle state for dirty checking
 function applyViewerConfig(v){
   if(!v)return;
-  // Snapshot toggle state before applying
-  const togBefore=JSON.stringify(toggles);
   if(v.camera){
     if(v.camera.radius!=null){VC.radius=v.camera.radius;if(_lastCfgRadius===null||v.camera.radius!==_lastCfgRadius){baseRadius=v.camera.radius;}_lastCfgRadius=v.camera.radius;}
     if(v.camera.fov!=null&&v.camera.fov!==VC.fov){VC.fov=v.camera.fov;camera.fov=v.camera.fov;camera.updateProjectionMatrix();}
@@ -923,11 +920,10 @@ function applyViewerConfig(v){
   if(v.ripple){toggles.ripple=!!v.ripple.enabled;if(v.ripple.strength!=null)VC.rippleStrength=v.ripple.strength;if(!toggles.ripple){fxRippleStr.value=0;fxRippleAge.value=-1;rippleBirthTime=-1;}}
   if(v.dissolve){toggles.dissolve=!!v.dissolve.enabled;if(v.dissolve.noiseScale!=null){VC.dissolveNoiseScale=v.dissolve.noiseScale;fxDissolveNoise.value=v.dissolve.noiseScale;}if(v.dissolve.lift!=null){VC.dissolveLift=v.dissolve.lift;fxDissolveLift.value=v.dissolve.lift;}if(v.dissolve.spread!=null){VC.dissolveSpread=v.dissolve.spread;fxDissolveSpread.value=v.dissolve.spread;}if(!toggles.dissolve){fxDissolveProgress.value=0;dissolveActive=false;}}
   if(v.distanceFade){toggles.fade=!!v.distanceFade.enabled;if(v.distanceFade.radius!=null){VC.fadeRadius=v.distanceFade.radius;fadeSphere.radius=v.distanceFade.radius;}if(v.distanceFade.softEdge!=null){VC.fadeSoft=v.distanceFade.softEdge;fadeEdit.softEdge=v.distanceFade.softEdge;}}
-  if(v.gyroscope&&v.gyroscope.strength!=null)VC.gyroStrength=v.gyroscope.strength;
+  if(v.gyroscope){if(v.gyroscope.strength!=null)VC.gyroStrength=v.gyroscope.strength;if(v.gyroscope.maxOffset!=null)VC.gyroMaxOffset=v.gyroscope.maxOffset;if(v.gyroscope.smoothing!=null)VC.gyroSmoothing=v.gyroscope.smoothing;}
   if(v.splatTransform&&currentSplat){if(v.splatTransform.posX!=null)currentSplat.position.x=v.splatTransform.posX;if(v.splatTransform.posY!=null)currentSplat.position.y=v.splatTransform.posY;if(v.splatTransform.posZ!=null)currentSplat.position.z=v.splatTransform.posZ;if(v.splatTransform.scale!=null)currentSplat.scale.setScalar(v.splatTransform.scale);}
   if(v.reveal&&v.reveal.duration!=null)VC.revealDuration=v.reveal.duration;
-  // Only apply toggles if any toggle state actually changed
-  if(JSON.stringify(toggles)!==togBefore)applyAllToggles();
+  applyAllToggles();
 }
 
 

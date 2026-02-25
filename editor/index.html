@@ -29,10 +29,9 @@ html,body{height:100%;overflow:hidden;background:var(--panel);color:var(--text);
 .abtn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--dim);font:inherit;font-size:10px;cursor:pointer;transition:all .15s}
 .abtn:hover{border-color:#444;color:var(--text)}.abtn.primary{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase}
 .abtn.done{border-color:#4a4;color:#4a4;background:rgba(68,170,68,.1)}
-.panel-left,.panel-right{background:var(--panel);overflow-y:auto;padding-bottom:20px}
+.panel-left,.panel-right{background:var(--panel);overflow-y:scroll;padding-bottom:20px;scrollbar-width:none;-ms-overflow-style:none}
 .panel-left{border-right:1px solid var(--border)}.panel-right{border-left:1px solid var(--border)}
-.panel-left::-webkit-scrollbar,.panel-right::-webkit-scrollbar{width:4px}
-.panel-left::-webkit-scrollbar-thumb,.panel-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.panel-left::-webkit-scrollbar,.panel-right::-webkit-scrollbar{display:none}
 .center{display:flex;align-items:center;justify-content:center;background:var(--center-bg);position:relative;overflow:hidden;flex-direction:column}
 /* Device frame: SVG overlay on TOP of iframe (mask approach) */
 .device-frame{position:relative;transform-origin:top center;overflow:hidden}
@@ -245,7 +244,9 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;hei
             <div class="ctrl"><label>soft edge <span id="v-fse">1.50</span></label><input type="range" id="s-fse" min="0.1" max="5" step="0.1" value="1.5"></div>
           </div></div>
         <div class="sub-label">GYROSCOPE</div><div class="hint">Tilt device for parallax (mobile only)</div>
-        <div class="ctrl"><label>strength <span id="v-gs">0.15</span></label><input type="range" id="s-gs" min="0" max="0.5" step="0.01" value="0.15"></div>
+        <div class="ctrl"><label>strength <span id="v-gs">0.35</span></label><input type="range" id="s-gs" min="0" max="1" step="0.01" value="0.35"></div>
+        <div class="ctrl"><label>max offset <span id="v-gmo">0.60</span></label><input type="range" id="s-gmo" min="0.1" max="1.5" step="0.05" value="0.6"></div>
+        <div class="ctrl"><label>smoothing <span id="v-gsm">0.12</span></label><input type="range" id="s-gsm" min="0.02" max="0.3" step="0.01" value="0.12"></div>
         <div class="sub-label">SPLAT TRANSFORM</div><div class="hint">Move the 3D geometry in space</div>
         <div class="ctrl"><label>pos X <span id="v-sx">0.00</span></label><input type="range" id="s-sx" min="-3" max="3" step="0.05" value="0"></div>
         <div class="ctrl"><label>pos Y <span id="v-sy">0.00</span></label><input type="range" id="s-sy" min="-3" max="3" step="0.05" value="0"></div>
@@ -425,7 +426,7 @@ const toggles={drift:false,warmth:false,bloom:false,film:false,dof:false,ripple:
 document.querySelectorAll('.tog').forEach(el=>{const k=el.dataset.tog;el.addEventListener('click',e=>{e.stopPropagation();toggles[k]=!toggles[k];el.classList.toggle('on',toggles[k]);const sl=document.querySelector(`[data-fx="${k}"]`);if(sl)sl.classList.toggle('disabled',!toggles[k]);pushConfig();});});
 
 // ═══ SLIDERS ═══
-const ALL_S='rad fov ch hlim vmin vmax zmn zmx lx ly lz isp iam da ds dp dy df wt bs bt bk bc fe fv fc fg ft ff dfa dfb bgb bgr bgs td rs dn dl dss rd fsr fse gs sx sy sz ss'.split(' ');
+const ALL_S='rad fov ch hlim vmin vmax zmn zmx lx ly lz isp iam da ds dp dy df wt bs bt bk bc fe fv fc fg ft ff dfa dfb bgb bgr bgs td rs dn dl dss rd fsr fse gs gmo gsm sx sy sz ss'.split(' ');
 ALL_S.forEach(id=>{const sl=$('s-'+id),vl=$('v-'+id);if(!sl)return;sl.addEventListener('input',()=>{const v=parseFloat(sl.value),d=sl.step.includes('.')?sl.step.split('.')[1].length:0;if(vl)vl.textContent=v.toFixed(d);pushConfig();});});
 $('sel-reveal')?.addEventListener('change',()=>pushConfig());$('sel-trans')?.addEventListener('change',()=>pushConfig());
 
@@ -521,7 +522,7 @@ function getViewerConfig(){return{
   ripple:{enabled:toggles.ripple,strength:pf('rs')},dissolve:{enabled:toggles.dissolve,noiseScale:pf('dn'),lift:pf('dl'),spread:pf('dss')},
   reveal:{type:$('sel-reveal').value,duration:pf('rd')},
   distanceFade:{enabled:toggles.fade,radius:pf('fsr'),softEdge:pf('fse')},
-  gyroscope:{strength:pf('gs')},splatTransform:{posX:pf('sx'),posY:pf('sy'),posZ:pf('sz'),scale:pf('ss')}};}
+  gyroscope:{strength:pf('gs'),maxOffset:pf('gmo'),smoothing:pf('gsm')},splatTransform:{posX:pf('sx'),posY:pf('sy'),posZ:pf('sz'),scale:pf('ss')}};}
 function getEventConfig(){
   const lu=[];document.querySelectorAll('#lineupList .past-row').forEach(r=>{const n=r.querySelector('input:not([type="checkbox"])');const h=r.querySelector('[type="checkbox"]');if(n?.value.trim())lu.push({name:n.value.trim(),headliner:h?.checked||false});});
   const pe=[];document.querySelectorAll('#pastList .past-row').forEach((r)=>{const i=parseInt(r.dataset.idx||0);pe.push({title:r.querySelector('[data-field="title"]')?.value||'',date:r.querySelector('[data-field="date"]')?.value||'',image:assets.pastImages[i]||'',hasSplat:!!assets.memorySogs[i]});});
@@ -635,7 +636,7 @@ function applyImport(cfg){const v=cfg.viewer;if(!v)return;
     'fe':v.post?.filmGrade?.exposure,'fv':v.post?.filmGrade?.vignette,'fc':v.post?.filmGrade?.chroma,'fg':v.post?.filmGrade?.grain,'ft':v.post?.filmGrade?.tint,'ff':v.post?.filmGrade?.fade,
     'dfa':v.post?.dof?.aperture,'dfb':v.post?.dof?.blur,'bgb':v.background?.blur,'bgr':v.background?.brightness,'bgs':v.background?.saturation,
     'td':v.transitions?.duration,'rs':v.ripple?.strength,'dn':v.dissolve?.noiseScale,'dl':v.dissolve?.lift,'dss':v.dissolve?.spread,
-    'rd':v.reveal?.duration,'fsr':v.distanceFade?.radius,'fse':v.distanceFade?.softEdge,'gs':v.gyroscope?.strength,
+    'rd':v.reveal?.duration,'fsr':v.distanceFade?.radius,'fse':v.distanceFade?.softEdge,'gs':v.gyroscope?.strength,'gmo':v.gyroscope?.maxOffset,'gsm':v.gyroscope?.smoothing,
     'sx':v.splatTransform?.posX,'sy':v.splatTransform?.posY,'sz':v.splatTransform?.posZ,'ss':v.splatTransform?.scale};
   for(const[id,val]of Object.entries(sm)){if(val==null)continue;const sl=$('s-'+id),vl=$('v-'+id);if(sl){sl.value=val;const d=sl.step.includes('.')?sl.step.split('.')[1].length:0;if(vl)vl.textContent=parseFloat(val).toFixed(d);}}
   const tm={drift:v.effects?.drift?.enabled,warmth:v.effects?.warmth?.enabled,bloom:v.post?.bloom?.enabled,film:v.post?.filmGrade?.enabled,dof:v.post?.dof?.enabled,ripple:v.ripple?.enabled,dissolve:v.dissolve?.enabled,fade:v.distanceFade?.enabled,bgColor:v.background?.colorOverride,idle:v.idle?.enabled};
