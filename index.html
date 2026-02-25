@@ -7,7 +7,9 @@
 <meta property="og:description" content="Recess Presents · Venue MOT · Afrobeats & Amapiano">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#14100E">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>inside.live</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +26,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#14100E;--bgR:20;--bgG:16;--bgB:14;
+  --bg:#000000;--bgR:0;--bgG:0;--bgB:0;
   --text:#F5F5F3;--mid:rgba(255,255,255,.65);--dim:rgba(255,255,255,.45);
   /* Typography domains */
   --tf:'Instrument Sans',sans-serif;--tw:700;--tc:var(--text);
@@ -36,9 +38,8 @@
   --gl-bg:rgba(var(--uiR),var(--uiG),var(--uiB),.78);--gl-bdr:rgba(255,255,255,.22);
   --r:16px;--r-sm:12px
 }
-html{background:var(--bg);overflow-y:scroll;scrollbar-width:none;-ms-overflow-style:none}
-html::-webkit-scrollbar{display:none}
-body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;scrollbar-width:none;-ms-overflow-style:none}
+::-webkit-scrollbar{display:none}
 
 /* ── Glass ── */
 .g{position:relative;background:var(--gl-bg);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--gl-bdr);border-radius:var(--r);box-shadow:0 .5px 0 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.25);overflow:hidden}
