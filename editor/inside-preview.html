@@ -936,7 +936,8 @@ function applyColor({r,g,b}){
     rt.style.setProperty('--bg','rgb('+bR+','+bG+','+bB+')');
     rt.style.setProperty('--bgR',bR);rt.style.setProperty('--bgG',bG);rt.style.setProperty('--bgB',bB);
     if(!EC?.uiTint)applyUiTint(bR,bG,bB);
-    const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content='#000';
+    const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content='rgb('+bR+','+bG+','+bB+')';
+    document.querySelectorAll('body,html').forEach(el=>el.style.background='rgb('+bR+','+bG+','+bB+')');
   }
   rt.style.setProperty('--accent','rgb('+r+','+g+','+b+')');
   $('glow').style.background='radial-gradient(ellipse 80% 70% at 50% 50%,rgba('+r+','+g+','+b+',.30) 0%,rgba('+r+','+g+','+b+',.25) 10%,rgba('+r+','+g+','+b+',.18) 22%,rgba('+r+','+g+','+b+',.12) 34%,rgba('+r+','+g+','+b+',.07) 46%,rgba('+r+','+g+','+b+',.04) 58%,rgba('+r+','+g+','+b+',.015) 72%,transparent 90%)';
