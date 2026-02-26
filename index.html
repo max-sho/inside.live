@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta property="og:title" content="Homecoming — inside.live">
 <meta property="og:description" content="Recess Presents · Venue MOT · Afrobeats & Amapiano">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#14100E">
 <title>inside.live</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +36,7 @@
   --gl-bg:rgba(var(--uiR),var(--uiG),var(--uiB),.78);--gl-bdr:rgba(255,255,255,.22);
   --r:16px;--r-sm:12px
 }
-html,body{background:#000;color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none}
+html,body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none}
 
 /* ── Glass ── */
 .g{position:relative;background:var(--gl-bg);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--gl-bdr);border-radius:var(--r);box-shadow:0 .5px 0 0 rgba(255,255,255,.1) inset,0 1px 3px rgba(0,0,0,.25);overflow:hidden}
@@ -47,7 +47,7 @@ html,body{background:#000;color:var(--text);font-family:'Instrument Sans',-apple
 .page::after{content:'';position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat;background-size:180px;mix-blend-mode:overlay}
 
 /* ── Hero ── */
-.hero{position:fixed;top:calc(-1 * env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:calc(100dvh + env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px));overflow:hidden;z-index:0;will-change:opacity}
+.hero{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:100dvh;overflow:hidden;z-index:0;will-change:opacity}
 .glow{position:absolute;inset:-40%;filter:blur(60px);z-index:0;pointer-events:none;animation:pulse 8s ease-in-out infinite alternate}
 @keyframes pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:1;transform:scale(1.05)}}
 #vm{position:absolute;inset:0;z-index:1}
@@ -68,18 +68,18 @@ html,body{background:#000;color:var(--text);font-family:'Instrument Sans',-apple
 @keyframes fadeC{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
 
 /* ── Hero tap zone (triggers cinema mode) ── */
-.hero-tap{position:absolute;inset:0;bottom:42dvh;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero-tap{position:absolute;inset:0;bottom:35dvh;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 /* ── Content (info mode — default) ── */
 .content{
   position:relative;z-index:3;
-  padding:58dvh 16px 16px;
+  padding:65dvh 16px 16px;
   display:flex;flex-direction:column;gap:8px;
   transition:opacity .45s cubic-bezier(.16,1,.3,1),transform .45s cubic-bezier(.16,1,.3,1);
   will-change:opacity,transform;
 }
 .content::before{
-  content:'';position:absolute;top:calc(58dvh - 220px);left:-100vw;right:-100vw;
+  content:'';position:absolute;top:calc(65dvh - 220px);left:-100vw;right:-100vw;
   bottom:0;z-index:-1;pointer-events:none;
   background:linear-gradient(to bottom,
     transparent 0px,
@@ -1211,7 +1211,6 @@ if(isEmbedded){
       const px=e.deltaMode===1?e.deltaY*16:e.deltaY;
       window.scrollBy(0,px);
     } else {
-      // Cinema/memory mode: zoom camera
       baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,baseRadius+e.deltaY*ZOOM_SENSITIVITY));
       lastInteraction=performance.now()/1000;
     }
