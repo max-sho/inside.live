@@ -403,7 +403,7 @@ function resizeFrame(){const f=$('deviceFrame'),c=$('centerPane'),d=DEVICES[curr
   $('scaleLabel').textContent=iframeW+'×'+iframeH;}
 $('deviceSel').addEventListener('click',e=>{const b=e.target.closest('.dbtn');if(!b)return;document.querySelectorAll('.dbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentDevice=b.dataset.device;resizeFrame();});
 
-// ═══ SCROLL FORWARDING — trackpad/wheel over device frame → iframe ═══
+// ═══ SCROLL FORWARDING ═══
 $('centerPane').addEventListener('wheel',e=>{
   const fr=$('deviceFrame').getBoundingClientRect();
   if(e.clientX>=fr.left&&e.clientX<=fr.right&&e.clientY>=fr.top&&e.clientY<=fr.bottom){
