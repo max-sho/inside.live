@@ -1,8 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/editor/(.*)", "destination": "/editor/$1" },
-    { "source": "/(.*)", "destination": "/$1" }
-  ],
   "headers": [
     {
       "source": "/(.*).sog",
