@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta property="og:title" content="Homecoming — inside.live">
 <meta property="og:description" content="Recess Presents · Venue MOT · Afrobeats & Amapiano">
 <meta property="og:type" content="website">
@@ -48,7 +48,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 .page::after{content:'';position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat;background-size:180px;mix-blend-mode:overlay}
 
 /* ── Hero ── */
-.hero{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:100dvh;overflow:hidden;z-index:0;will-change:opacity}
+.hero{position:fixed;top:calc(-1 * env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:calc(100dvh + env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px));overflow:hidden;z-index:0;will-change:opacity}
 .glow{position:absolute;inset:-40%;filter:blur(60px);z-index:0;pointer-events:none;animation:pulse 8s ease-in-out infinite alternate}
 @keyframes pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:1;transform:scale(1.05)}}
 #vm{position:absolute;inset:0;z-index:1}
@@ -793,7 +793,7 @@ canvas.addEventListener("touchend",(e)=>{if(e.touches.length<2)isPinching=false;
 canvas.addEventListener("pointerdown",(e)=>{if(e.pointerType==="touch")return;isDragging=true;prevPointerX=e.clientX;prevPointerY=e.clientY;velTheta=0;velPhi=0;lastInteraction=performance.now()/1000;pointerDownPos={x:e.clientX,y:e.clientY};});
 canvas.addEventListener("pointermove",(e)=>{if(e.pointerType==="touch"||!isDragging)return;const dx=(e.clientX-prevPointerX)/innerWidth;const dy=(e.clientY-prevPointerY)/innerHeight;prevPointerX=e.clientX;prevPointerY=e.clientY;velTheta=-dx*DRAG_SENSITIVITY;velPhi=dy*DRAG_SENSITIVITY*0.6;baseTheta+=velTheta;basePhi+=velPhi;lastInteraction=performance.now()/1000;});
 canvas.addEventListener("pointerup",(e)=>{if(e.pointerType==="touch"){if(pointerDownPos&&Math.hypot(e.clientX-pointerDownPos.x,e.clientY-pointerDownPos.y)<8)spawnRipple(e.clientX,e.clientY);pointerDownPos=null;return;}isDragging=false;if(pointerDownPos&&Math.hypot(e.clientX-pointerDownPos.x,e.clientY-pointerDownPos.y)<8)spawnRipple(e.clientX,e.clientY);pointerDownPos=null;});
-canvas.addEventListener("wheel",(e)=>{e.preventDefault();baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,baseRadius+e.deltaY*ZOOM_SENSITIVITY));lastInteraction=performance.now()/1000;},{passive:false});
+canvas.addEventListener("wheel",(e)=>{if(mode==='info')return;e.preventDefault();baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,baseRadius+e.deltaY*ZOOM_SENSITIVITY));lastInteraction=performance.now()/1000;},{passive:false});
 
 // Ripple click
 let rippleBirthTime=-1;
@@ -1165,6 +1165,10 @@ window.addEventListener("message",(e)=>{
       if(msg.mode==='cinema')enterCinema();else if(msg.mode==='memory')enterMemory(0);else exitToInfo();break;
     case "trigger-reveal":startReveal();break;
     case "trigger-dissolve":triggerDissolve();break;
+    case "editor-wheel":
+      if(mode==='info'){const px=msg.deltaMode===1?msg.deltaY*16:msg.deltaY;window.scrollBy(0,px);}
+      else{baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,baseRadius+msg.deltaY*ZOOM_SENSITIVITY));lastInteraction=performance.now()/1000;}
+      break;
   }
 });
 
@@ -1227,6 +1231,18 @@ wire();
 
 if(isEmbedded){
   window.parent.postMessage({type:"preview-ready"},"*");
+  // CSS transform:scale() on the iframe (applied by editor) breaks native scroll.
+  // Intercept wheel events and handle programmatically instead.
+  window.addEventListener('wheel',e=>{
+    if(mode==='info'){
+      const px=e.deltaMode===1?e.deltaY*16:e.deltaY;
+      window.scrollBy(0,px);
+    } else {
+      baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,baseRadius+e.deltaY*ZOOM_SENSITIVITY));
+      lastInteraction=performance.now()/1000;
+    }
+    e.preventDefault();
+  },{passive:false});
 } else {
   // Standalone: load config.json + assets
   (async()=>{
