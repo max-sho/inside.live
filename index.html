@@ -786,11 +786,24 @@ let prevPointerX=0, prevPointerY=0, lastInteraction=0;
 
 // Touch
 let touchStartDist=0, pinchStartRadius=0, touchThetaStart=0, touchPhiStart=0;
+let panStartX=0, panStartY=0, panMidX=0, panMidY=0;
+const PAN_SENSITIVITY=0.004;
 canvas.addEventListener("touchstart",(e)=>{lastInteraction=performance.now()/1000;
-  if(e.touches.length===2){isPinching=true;const[a,b]=e.touches;touchStartDist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);pinchStartRadius=baseRadius;}
+  if(e.touches.length===2){isPinching=true;const[a,b]=e.touches;touchStartDist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);pinchStartRadius=baseRadius;panMidX=(a.clientX+b.clientX)/2;panMidY=(a.clientY+b.clientY)/2;}
   else if(e.touches.length===1){isDragging=true;prevPointerX=e.touches[0].clientX;prevPointerY=e.touches[0].clientY;touchThetaStart=baseTheta;touchPhiStart=basePhi;velTheta=0;velPhi=0;pointerDownPos={x:e.touches[0].clientX,y:e.touches[0].clientY};}
 },{passive:true});
-canvas.addEventListener("touchmove",(e)=>{if(isPinching&&e.touches.length===2){const[a,b]=e.touches;const dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);const scale=dist/touchStartDist;baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,pinchStartRadius/scale));lastInteraction=performance.now()/1000;}
+canvas.addEventListener("touchmove",(e)=>{if(isPinching&&e.touches.length===2){const[a,b]=e.touches;const dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);const scale=dist/touchStartDist;baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,pinchStartRadius/scale));
+    // Two-finger pan: translate target based on midpoint movement
+    const midX=(a.clientX+b.clientX)/2, midY=(a.clientY+b.clientY)/2;
+    const dMidX=midX-panMidX, dMidY=midY-panMidY;
+    if(Math.abs(dMidX)>1||Math.abs(dMidY)>1){
+      const right=new THREE.Vector3();const up=new THREE.Vector3();
+      right.setFromMatrixColumn(camera.matrixWorld,0);up.setFromMatrixColumn(camera.matrixWorld,1);
+      target.addScaledVector(right,-dMidX*PAN_SENSITIVITY*baseRadius);
+      target.addScaledVector(up,dMidY*PAN_SENSITIVITY*baseRadius);
+    }
+    panMidX=midX;panMidY=midY;
+    lastInteraction=performance.now()/1000;}
   else if(isDragging&&e.touches.length===1){const t=e.touches[0];const dx=(t.clientX-prevPointerX)/innerWidth;const dy=(t.clientY-prevPointerY)/innerHeight;prevPointerX=t.clientX;prevPointerY=t.clientY;velTheta=-dx*DRAG_SENSITIVITY;velPhi=dy*DRAG_SENSITIVITY*0.6;baseTheta+=velTheta;basePhi+=velPhi;lastInteraction=performance.now()/1000;}
 },{passive:true});
 canvas.addEventListener("touchend",(e)=>{if(e.touches.length<2)isPinching=false;if(e.touches.length===0){isDragging=false;if(pointerDownPos){const ct=e.changedTouches[0];if(ct&&Math.hypot(ct.clientX-pointerDownPos.x,ct.clientY-pointerDownPos.y)<8){if(mode==='info')enterCinema();else spawnRipple(ct.clientX,ct.clientY);}pointerDownPos=null;}}},{passive:true});

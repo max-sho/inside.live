@@ -78,6 +78,29 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;hei
 .past-sog{width:36px;height:24px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--dim);cursor:pointer;font-size:7px;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}.past-sog:hover{border-color:#444;color:var(--text)}.past-sog.loaded{border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .add-btn{width:100%;padding:6px;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--dim);font:inherit;font-size:10px;cursor:pointer}.add-btn:hover{border-color:#444;color:var(--text)}
 .trigger-btn{width:100%;padding:8px;border:1px solid var(--accent);border-radius:6px;background:var(--accent-dim);color:var(--accent);font:inherit;font-size:10px;font-weight:600;cursor:pointer;margin-top:6px;letter-spacing:1px;text-transform:uppercase}.trigger-btn:hover{background:rgba(255,77,0,.25)}
+/* Project picker */
+.proj-sel{position:relative;display:flex;align-items:center;gap:6px}
+.proj-btn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px;max-width:160px;transition:all .15s}
+.proj-btn:hover{border-color:#444}
+.proj-btn .proj-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:var(--accent)}
+.proj-btn .proj-arr{font-size:8px;color:var(--dim);flex-shrink:0}
+.proj-drop{position:absolute;top:100%;left:0;margin-top:4px;min-width:220px;background:var(--panel);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:100;display:none;overflow:hidden}
+.proj-drop.open{display:block}
+.proj-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;transition:background .1s;font-size:11px}
+.proj-item:hover{background:var(--accent-dim)}
+.proj-item .pi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-item .pi-slug{font-size:9px;color:var(--dim);font-family:'Space Mono',monospace}
+.proj-item .pi-del{color:var(--dim);font-size:14px;padding:0 4px;flex-shrink:0;opacity:0;transition:opacity .15s}.proj-item:hover .pi-del{opacity:1}.proj-item .pi-del:hover{color:#f44}
+.proj-item.active{background:var(--accent-dim);color:var(--accent)}
+.proj-new{border-top:1px solid var(--border);padding:8px 12px;font-size:10px;color:var(--accent);cursor:pointer;text-align:center;font-weight:600}
+.proj-new:hover{background:var(--accent-dim)}
+/* Deploy */
+.abtn.deploy{border-color:#4a4;color:#4a4;background:rgba(68,170,68,.1);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.abtn.deploy:hover{background:rgba(68,170,68,.2)}
+.abtn.deploying{pointer-events:none;opacity:.6}
+/* Memory mode indicator */
+.panel-left .mem-badge{display:none;padding:4px 10px;margin:0 14px 6px;border-radius:6px;background:rgba(147,51,234,.15);border:1px solid rgba(147,51,234,.3);color:#a855f7;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:'Space Mono',monospace}
+.panel-left.memory-mode .mem-badge{display:block}
 /* Presets */
 .preset-row{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
 .preset-chip{padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);font:inherit;font-size:9px;cursor:pointer;position:relative}
@@ -96,6 +119,11 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;hei
 <div class="editor">
   <div class="topbar">
     <div class="topbar-left"><div class="topbar-logo">inside editor</div><div class="topbar-sep"></div>
+      <div class="proj-sel">
+        <button class="proj-btn" id="projBtn"><span class="proj-name" id="projName">No Project</span><span class="proj-arr">▾</span></button>
+        <div class="proj-drop" id="projDrop"><div id="projList"></div><div class="proj-new" id="projNew">+ New Project</div></div>
+      </div>
+      <div class="topbar-sep"></div>
       <div class="device-sel" id="deviceSel">
         <button class="dbtn active" data-device="iphone15">iPhone 15 Pro Max<br><span class="dm">430×932</span></button>
         <button class="dbtn" data-device="iphone13">iPhone 13 Pro Max<br><span class="dm">428×926</span></button>
@@ -111,11 +139,13 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;hei
       <button class="abtn" id="revealBtn">▶ Reveal</button>
       <button class="abtn" id="importBtn">Import</button><input type="file" id="importFile" accept=".json,.zip" style="display:none">
       <button class="abtn" id="copyJsonBtn">Copy JSON</button>
-      <button class="abtn primary" id="exportBtn">Export Package</button></div>
+      <button class="abtn primary" id="exportBtn">Export Package</button>
+      <button class="abtn deploy" id="deployBtn">Deploy ▲</button></div>
   </div>
 
   <!-- LEFT -->
-  <div class="panel-left">
+  <div class="panel-left" id="panelLeft">
+    <div class="mem-badge" id="memBadge">Editing Memory Splats</div>
     <!-- PRESETS -->
     <div class="sec" id="sec-presets"><div class="sec-head"><span class="sec-arrow">▸</span><span class="sec-title">Presets</span></div>
       <div class="sec-body"><div class="preset-row" id="presetList"></div><button class="add-btn" id="savePreset">+ Save current as preset</button></div></div>
@@ -421,7 +451,32 @@ $('themeToggle').addEventListener('click',()=>{
 if(localStorage.getItem('editor-theme')==='light'){document.documentElement.classList.add('light');$('themeLabel').textContent='Dark';}
 
 // ═══ MODES ═══
-document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');sendP({type:'set-mode',mode:b.dataset.mode});}));
+let currentEditScope='hero';
+let memoryViewerSnapshot=null; // stores memory viewer config when editing hero
+function captureViewerSnapshot(){return{viewer:getViewerConfig(),toggles:{...toggles}};}
+function restoreViewerSnapshot(snap){if(!snap)return;applyImport({viewer:snap.viewer});
+  // Restore toggles that applyImport may have missed
+  for(const[k,v]of Object.entries(snap.toggles)){if(k in toggles){toggles[k]=v;const el=document.querySelector(`[data-tog="${k}"]`);if(el)el.classList.toggle('on',v);const sl=document.querySelector(`[data-fx="${k}"]`);if(sl)sl.classList.toggle('disabled',!v);}}}
+let heroViewerSnapshot=null;
+document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
+  const newMode=b.dataset.mode;
+  const wasMemory=currentEditScope==='memory';
+  const goingMemory=newMode==='memory';
+  // Swap viewer configs when crossing hero↔memory boundary
+  if(!wasMemory&&goingMemory){
+    heroViewerSnapshot=captureViewerSnapshot();
+    if(memoryViewerSnapshot)restoreViewerSnapshot(memoryViewerSnapshot);
+    currentEditScope='memory';
+    $('panelLeft').classList.add('memory-mode');
+  }else if(wasMemory&&!goingMemory){
+    memoryViewerSnapshot=captureViewerSnapshot();
+    if(heroViewerSnapshot)restoreViewerSnapshot(heroViewerSnapshot);
+    currentEditScope='hero';
+    $('panelLeft').classList.remove('memory-mode');
+  }
+  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  sendP({type:'set-mode',mode:newMode});
+}));
 $('revealBtn').addEventListener('click',()=>sendP({type:'trigger-reveal'}));
 $('transBtn').addEventListener('click',()=>triggerTransition());
 $('dissolveBtn').addEventListener('click',()=>sendP({type:'trigger-dissolve'}));
@@ -653,7 +708,10 @@ function applyImport(cfg){const v=cfg.viewer;if(!v)return;
   if(v.background?.color){$('f-bgcol').value=v.background.color;if(v.background.color.match(/^#/))$('bgColPick').value=v.background.color;}
   const ev=cfg.event;if(ev){if(ev.name)$('f-name').value=ev.name;if(ev.promoter)$('f-promoter').value=ev.promoter;if(ev.date)$('f-date').value=ev.date;if(ev.time){$('f-start').value=ev.time.start||'';$('f-end').value=ev.time.end||'';}if(ev.venue){$('f-venue').value=ev.venue.name||'';$('f-venueaddr').value=ev.venue.address||'';}if(ev.genre)$('f-genre').value=ev.genre;if(ev.description)$('f-desc').value=ev.description;if(ev.ticketUrl)$('f-ticket').value=ev.ticketUrl;if(ev.age)$('f-age').value=ev.age;if(ev.lastEntry)$('f-entry').value=ev.lastEntry;if(ev.socials){$('f-ig').value=ev.socials.instagram||'';$('f-tw').value=ev.socials.twitter||'';$('f-tt').value=ev.socials.tiktok||'';}if(ev.music){$('f-spotify').value=ev.music.spotify||'';$('f-apple').value=ev.music.apple||'';$('f-soundcloud').value=ev.music.soundcloud||'';}if(ev.uiTint){$('f-uitint').value=ev.uiTint;if(ev.uiTint.match(/^#/))$('uiTintPick').value=ev.uiTint;}if(ev.accentColorOverride){$('f-accent').value=ev.accentColorOverride;if(ev.accentColorOverride.match(/^#/))$('accentPick').value=ev.accentColorOverride;}
     if(ev.typography){const t=ev.typography;if(t.title){if(t.title.font)$('ty-tf').value=t.title.font;if(t.title.weight)$('ty-tw').value=t.title.weight;if(t.title.color)$('ty-tc').value=t.title.color;}if(t.labels){if(t.labels.font)$('ty-lf').value=t.labels.font;if(t.labels.weight)$('ty-lw').value=t.labels.weight;if(t.labels.color)$('ty-lc').value=t.labels.color;}if(t.body){if(t.body.font)$('ty-bf').value=t.body.font;if(t.body.weight)$('ty-bw').value=t.body.weight;if(t.body.color)$('ty-bc').value=t.body.color;}if(t.buttons){if(t.buttons.font)$('ty-btf').value=t.buttons.font;if(t.buttons.weight)$('ty-btw').value=t.buttons.weight;if(t.buttons.color)$('ty-btc').value=t.buttons.color;}}}
-  pushEventData();pushConfig();}
+  pushEventData();pushConfig();
+  // Store memory viewer if present
+  if(cfg.memoryViewer)memoryViewerSnapshot={viewer:cfg.memoryViewer,toggles:{...toggles}};
+}
 
 // ═══ COPY JSON (quick clipboard) ═══
 $('copyJsonBtn').addEventListener('click',async()=>{
@@ -674,7 +732,16 @@ $('exportBtn').addEventListener('click',async()=>{
     const zip=new JSZip();
     const assetsDir=zip.folder('assets');
     const eventCfg=getEventConfig();
-    const viewerCfg=getViewerConfig();
+    // Capture both hero and memory viewer configs
+    let heroVC, memVC;
+    if(currentEditScope==='memory'){
+      memVC=getViewerConfig();
+      heroVC=heroViewerSnapshot?.viewer||getViewerConfig();
+    }else{
+      heroVC=getViewerConfig();
+      memVC=memoryViewerSnapshot?.viewer||null;
+    }
+    const viewerCfg=heroVC;
 
     // Slug from event name
     const slug=(eventCfg.name||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+$/,'');
@@ -745,6 +812,7 @@ $('exportBtn').addEventListener('click',async()=>{
     const config={
       event:exportEvent,
       viewer:viewerCfg,
+      memoryViewer:memVC||null,
       assets:{
         splats:splatPaths,
         background:bgPath,
@@ -786,6 +854,221 @@ $('exportBtn').addEventListener('click',async()=>{
   btn.style.pointerEvents='';
   setTimeout(()=>{btn.textContent='Export Package';btn.classList.remove('done');},2500);
 });
+
+// ═══ INDEXEDDB — binary asset storage for projects ═══
+const IDB_NAME='inside-projects',IDB_VER=1;
+function openDB(){return new Promise((res,rej)=>{const req=indexedDB.open(IDB_NAME,IDB_VER);req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('assets'))db.createObjectStore('assets');};req.onsuccess=e=>res(e.target.result);req.onerror=e=>rej(e.target.error);});}
+async function idbPut(key,val){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put(val,key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});}
+async function idbGet(key){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction('assets','readonly');const req=tx.objectStore('assets').get(key);req.onsuccess=()=>res(req.result);req.onerror=e=>rej(e.target.error);});}
+async function idbDel(prefix){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction('assets','readwrite');const store=tx.objectStore('assets');const req=store.getAllKeys();req.onsuccess=()=>{req.result.filter(k=>k.startsWith(prefix)).forEach(k=>store.delete(k));};tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});}
+
+// ═══ PROJECT SYSTEM ═══
+const PROJ_META_KEY='inside-projects-meta';
+let currentProject=null;
+function getProjectList(){try{return JSON.parse(localStorage.getItem(PROJ_META_KEY))||[];}catch(e){return[];}}
+function saveProjectList(list){localStorage.setItem(PROJ_META_KEY,JSON.stringify(list));}
+
+function renderProjectList(){
+  const list=getProjectList(),el=$('projList');el.innerHTML='';
+  list.forEach((p,i)=>{
+    const item=document.createElement('div');item.className='proj-item'+(currentProject?.slug===p.slug?' active':'');
+    item.innerHTML=`<span class="pi-name">${p.name}</span><span class="pi-slug">/${p.slug}</span><span class="pi-del">×</span>`;
+    item.querySelector('.pi-name').addEventListener('click',()=>loadProject(p.slug));
+    item.querySelector('.pi-del').addEventListener('click',async e=>{e.stopPropagation();if(!confirm('Delete "'+p.name+'"?'))return;
+      const pl=getProjectList().filter(x=>x.slug!==p.slug);saveProjectList(pl);await idbDel('proj:'+p.slug+':');
+      if(currentProject?.slug===p.slug){currentProject=null;$('projName').textContent='No Project';}
+      renderProjectList();closeProjDrop();});
+    el.appendChild(item);
+  });
+}
+
+function closeProjDrop(){$('projDrop').classList.remove('open');}
+$('projBtn').addEventListener('click',()=>{$('projDrop').classList.toggle('open');renderProjectList();});
+document.addEventListener('click',e=>{if(!e.target.closest('.proj-sel'))closeProjDrop();});
+
+$('projNew').addEventListener('click',()=>{
+  const name=prompt('Project name (e.g. Recess Block Party):');if(!name)return;
+  const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+$/,'').replace(/^-+/,'');
+  if(!slug){alert('Invalid name');return;}
+  const list=getProjectList();
+  if(list.find(p=>p.slug===slug)){alert('Project "'+slug+'" already exists');return;}
+  list.push({name,slug,created:Date.now()});saveProjectList(list);
+  currentProject={name,slug};$('projName').textContent=name;
+  renderProjectList();closeProjDrop();
+  // Save current state immediately
+  autoSaveProject();
+});
+
+async function autoSaveProject(){
+  if(!currentProject)return;
+  const slug=currentProject.slug;
+  // Save configs
+  let heroVC,memVC;
+  if(currentEditScope==='memory'){memVC=getViewerConfig();heroVC=heroViewerSnapshot?.viewer||getViewerConfig();}
+  else{heroVC=getViewerConfig();memVC=memoryViewerSnapshot?.viewer||null;}
+  const meta={event:getEventConfig(),heroViewer:heroVC,memoryViewer:memVC,toggles:{...toggles}};
+  await idbPut('proj:'+slug+':meta',meta);
+  // Save binary assets
+  if(assetFiles.mainSog){const buf=await assetFiles.mainSog.arrayBuffer();await idbPut('proj:'+slug+':main.sog',{name:assetFiles.mainSog.name,buffer:buf});}
+  for(const[idx,f]of Object.entries(assetFiles.memorySogs)){if(!f)continue;const buf=await f.arrayBuffer();await idbPut('proj:'+slug+':mem'+idx+'.sog',{name:f.name,buffer:buf});}
+  if(assetFiles.background){const buf=await assetFiles.background.arrayBuffer();await idbPut('proj:'+slug+':bg',{name:assetFiles.background.name,buffer:buf});}
+  if(assetFiles.logo){const buf=await assetFiles.logo.arrayBuffer();await idbPut('proj:'+slug+':logo',{name:assetFiles.logo.name,buffer:buf});}
+  for(const[idx,f]of Object.entries(assetFiles.pastImages)){if(!f)continue;const buf=await f.arrayBuffer();await idbPut('proj:'+slug+':past'+idx,{name:f.name,buffer:buf});}
+}
+
+async function loadProject(slug){
+  const list=getProjectList();const proj=list.find(p=>p.slug===slug);if(!proj)return;
+  currentProject={name:proj.name,slug};$('projName').textContent=proj.name;
+  closeProjDrop();
+  // Load meta
+  const meta=await idbGet('proj:'+slug+':meta');
+  if(!meta)return;
+  // Clear existing assets
+  clearMainSog();Object.keys(assets.memorySogs).forEach(k=>clearMemorySog(k));
+  // Load binary assets
+  const mainData=await idbGet('proj:'+slug+':main.sog');
+  if(mainData){const f=new File([mainData.buffer],mainData.name);setMainSog(f);}
+  for(let i=0;i<3;i++){const memData=await idbGet('proj:'+slug+':mem'+i+'.sog');
+    if(memData){const f=new File([memData.buffer],memData.name);setMemorySog(i,f);}}
+  const bgData=await idbGet('proj:'+slug+':bg');
+  if(bgData){const f=new File([bgData.buffer],bgData.name);loadA(f,'background',$('dropBg'),$('bgName'),'background');}
+  const logoData=await idbGet('proj:'+slug+':logo');
+  if(logoData){const f=new File([logoData.buffer],logoData.name);loadA(f,'logo',$('dropLogo'),$('logoName'),'logo');}
+  for(let i=0;i<3;i++){const pastData=await idbGet('proj:'+slug+':past'+i);
+    if(pastData){const u=URL.createObjectURL(new Blob([pastData.buffer]));assets.pastImages[i]=u;assetFiles.pastImages[i]=new File([pastData.buffer],pastData.name);}}
+  // Apply configs
+  if(meta.heroViewer)applyImport({event:meta.event,viewer:meta.heroViewer});
+  if(meta.memoryViewer)memoryViewerSnapshot={viewer:meta.memoryViewer,toggles:meta.toggles||{}};
+  heroViewerSnapshot=null;currentEditScope='hero';$('panelLeft').classList.remove('memory-mode');
+  // Rebuild past events UI
+  $('pastList').innerHTML='';
+  if(meta.event?.pastEvents){meta.event.pastEvents.forEach((pe,i)=>{
+    addPastRow(pe.title,pe.date,i);
+    if(assets.pastImages[i]){const thumb=document.querySelector(`#pastList [data-idx="${i}"] .past-thumb`);
+      if(thumb)thumb.innerHTML='<img src="'+assets.pastImages[i]+'">';}
+    if(assets.memorySogs[i]){const btn=document.querySelector(`#pastList .past-sog[data-idx="${i}"]`);
+      if(btn){btn.classList.add('loaded');btn.textContent=assets.memorySogs[i].name.slice(0,6);}}
+  });}
+  renderProjectList();
+}
+
+// Auto-save debounced on every config change
+let _autoSaveTimer=null;
+const origPushConfig=pushConfig,origPushEventData=pushEventData;
+pushConfig=function(){origPushConfig();clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(autoSaveProject,2000);};
+pushEventData=function(){origPushEventData();clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(autoSaveProject,2000);};
+
+// ═══ DEPLOY — Vercel API ═══
+const VERCEL_TOKEN_KEY='inside-vercel-token';
+const VERCEL_TEAM_KEY='inside-vercel-team';
+
+$('deployBtn').addEventListener('click',async()=>{
+  if(!currentProject){alert('Save to a project first');return;}
+  let token=localStorage.getItem(VERCEL_TOKEN_KEY);
+  if(!token){token=prompt('Vercel API Token (from vercel.com/account/tokens):');if(!token)return;localStorage.setItem(VERCEL_TOKEN_KEY,token);}
+  const btn=$('deployBtn');btn.textContent='Deploying…';btn.classList.add('deploying');
+  try{
+    // Build files in memory (same as export)
+    const eventCfg=getEventConfig();
+    let heroVC,memVC;
+    if(currentEditScope==='memory'){memVC=getViewerConfig();heroVC=heroViewerSnapshot?.viewer||getViewerConfig();}
+    else{heroVC=getViewerConfig();memVC=memoryViewerSnapshot?.viewer||null;}
+    const slug=currentProject.slug;
+    const files=[];
+    const splatPaths=[];
+    // Main splat
+    if(assetFiles.mainSog){const buf=await assetFiles.mainSog.arrayBuffer();const b64=btoa(new Uint8Array(buf).reduce((s,b)=>s+String.fromCharCode(b),''));
+      files.push({file:slug+'/assets/main.sog',data:b64,encoding:'base64'});splatPaths.push('./assets/main.sog');}
+    // Memory splats
+    const memKeys=Object.keys(assetFiles.memorySogs).sort();
+    for(let i=0;i<memKeys.length;i++){const mf=assetFiles.memorySogs[memKeys[i]];if(!mf)continue;
+      const buf=await mf.arrayBuffer();const b64=btoa(new Uint8Array(buf).reduce((s,b)=>s+String.fromCharCode(b),''));
+      const fname='past-'+(i+1)+'.sog';files.push({file:slug+'/assets/'+fname,data:b64,encoding:'base64'});splatPaths.push('./assets/'+fname);}
+    // Background
+    let bgPath=null;
+    if(assetFiles.background){const ext=getFileExt(assetFiles.background)||'.jpg';const fname='bg'+ext;
+      const buf=await assetFiles.background.arrayBuffer();const b64=btoa(new Uint8Array(buf).reduce((s,b)=>s+String.fromCharCode(b),''));
+      files.push({file:slug+'/assets/'+fname,data:b64,encoding:'base64'});bgPath='./assets/'+fname;}
+    // Logo
+    let logoPath=null;
+    if(assetFiles.logo){const ext=getFileExt(assetFiles.logo)||'.png';const fname='logo'+ext;
+      const buf=await assetFiles.logo.arrayBuffer();const b64=btoa(new Uint8Array(buf).reduce((s,b)=>s+String.fromCharCode(b),''));
+      files.push({file:slug+'/assets/'+fname,data:b64,encoding:'base64'});logoPath='./assets/'+fname;}
+    // Past images
+    const pastImagePaths={};
+    for(const[idx,file]of Object.entries(assetFiles.pastImages)){if(!file)continue;const ext=getFileExt(file)||'.jpg';const fname=idx+ext;
+      const buf=await file.arrayBuffer();const b64=btoa(new Uint8Array(buf).reduce((s,b)=>s+String.fromCharCode(b),''));
+      files.push({file:slug+'/assets/past/'+fname,data:b64,encoding:'base64'});pastImagePaths[idx]='./assets/past/'+fname;}
+    // Config
+    const exportEvent={...eventCfg};if(logoPath)exportEvent.promoterLogo=logoPath;
+    if(exportEvent.pastEvents)exportEvent.pastEvents=exportEvent.pastEvents.map((pe,i)=>({...pe,image:pastImagePaths[i]||pe.image||''}));
+    const config={event:exportEvent,viewer:heroVC,memoryViewer:memVC,assets:{splats:splatPaths,background:bgPath,logo:logoPath}};
+    files.push({file:slug+'/config.json',data:JSON.stringify(config,null,2)});
+    // Preview HTML
+    try{const previewResp=await fetch('inside-preview.html');let html=await previewResp.text();
+      if(splatPaths.length)html=html.replace(/splatUrl:\s*isEmbedded\s*\?\s*null\s*:\s*"[^"]*"/,'splatUrl: isEmbedded ? null : "'+splatPaths[0]+'"');
+      if(bgPath)html=html.replace(/bgImage:\s*isEmbedded\s*\?\s*null\s*:\s*"[^"]*"/,'bgImage: isEmbedded ? null : "'+bgPath+'"');
+      files.push({file:slug+'/index.html',data:html});}catch(e){}
+
+    btn.textContent='Uploading…';
+
+    // Vercel Deploy API — file-based deployment
+    // Note: Vercel deploy API has file size limits, so we use Git push approach instead
+    // For large .sog files, we'll use the GitHub Contents API to push to the repo
+    const GITHUB_TOKEN_KEY='inside-github-token';
+    let ghToken=localStorage.getItem(GITHUB_TOKEN_KEY);
+    if(!ghToken){ghToken=prompt('GitHub Personal Access Token (needs repo scope):');if(!ghToken){btn.textContent='Deploy ▲';btn.classList.remove('deploying');return;}localStorage.setItem(GITHUB_TOKEN_KEY,ghToken);}
+    const REPO='max-sho/inside.live';
+    const branch='main';
+
+    // Get current tree SHA
+    const refResp=await fetch('https://api.github.com/repos/'+REPO+'/git/refs/heads/'+branch,{headers:{'Authorization':'token '+ghToken}});
+    if(!refResp.ok)throw new Error('GitHub auth failed — check token');
+    const refData=await refResp.json();
+    const baseCommitSha=refData.object.sha;
+
+    // Create blobs for each file
+    btn.textContent='Creating blobs…';
+    const treeItems=[];
+    for(const f of files){
+      const blobResp=await fetch('https://api.github.com/repos/'+REPO+'/git/blobs',{method:'POST',headers:{'Authorization':'token '+ghToken,'Content-Type':'application/json'},
+        body:JSON.stringify(f.encoding==='base64'?{content:f.data,encoding:'base64'}:{content:f.data,encoding:'utf-8'})});
+      if(!blobResp.ok)throw new Error('Failed to create blob for '+f.file);
+      const blob=await blobResp.json();
+      treeItems.push({path:f.file,mode:'100644',type:'blob',sha:blob.sha});
+    }
+
+    // Create tree
+    btn.textContent='Creating tree…';
+    const treeResp=await fetch('https://api.github.com/repos/'+REPO+'/git/trees',{method:'POST',headers:{'Authorization':'token '+ghToken,'Content-Type':'application/json'},
+      body:JSON.stringify({base_tree:baseCommitSha,tree:treeItems})});
+    const tree=await treeResp.json();
+
+    // Create commit
+    btn.textContent='Committing…';
+    const commitResp=await fetch('https://api.github.com/repos/'+REPO+'/git/commits',{method:'POST',headers:{'Authorization':'token '+ghToken,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'deploy: '+currentProject.name+' → /'+slug,tree:tree.sha,parents:[baseCommitSha]})});
+    const commit=await commitResp.json();
+
+    // Update ref
+    await fetch('https://api.github.com/repos/'+REPO+'/git/refs/heads/'+branch,{method:'PATCH',headers:{'Authorization':'token '+ghToken,'Content-Type':'application/json'},
+      body:JSON.stringify({sha:commit.sha})});
+
+    btn.textContent='Live ✓';btn.classList.remove('deploying');btn.classList.add('done');
+    setTimeout(()=>{btn.textContent='Deploy ▲';btn.classList.remove('done');},4000);
+    // Open in new tab after brief delay for Vercel to deploy
+    setTimeout(()=>window.open('https://inside.live/'+slug+'/','_blank'),3000);
+
+  }catch(e){
+    console.error('Deploy failed:',e);
+    btn.textContent='Failed';btn.classList.remove('deploying');
+    if(e.message.includes('auth')){localStorage.removeItem('inside-github-token');btn.textContent='Auth Failed — Retry';}
+    setTimeout(()=>{btn.textContent='Deploy ▲';},3000);
+  }
+});
+
+// ═══ LOAD LAST PROJECT ON STARTUP ═══
+(async()=>{const list=getProjectList();if(list.length){const last=list[list.length-1];await loadProject(last.slug);}})();
 
 window.addEventListener('resize',resizeFrame);window.addEventListener('load',resizeFrame);
 </script>
