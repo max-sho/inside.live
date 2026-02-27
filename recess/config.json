@@ -35,30 +35,30 @@
       {
         "title": "NYE Special",
         "date": "Dec 31",
-        "image": "./assets/past/0.jpg",
-        "hasSplat": true
+        "image": "",
+        "hasSplat": false
       },
       {
         "title": "Detour x Yam",
         "date": "Nov 23",
-        "image": "./assets/past/1.jpg",
-        "hasSplat": true
+        "image": "",
+        "hasSplat": false
       },
       {
         "title": "Summer Close",
         "date": "Sep 14",
-        "image": "./assets/past/2.jpg",
-        "hasSplat": true
+        "image": "",
+        "hasSplat": false
       }
     ],
     "socials": {
-      "instagram": "https://www.instagram.com/rec.ess/",
-      "twitter": "https://x.com/rec_ess",
-      "tiktok": "https://www.tiktok.com/@rec.ess"
+      "instagram": "",
+      "twitter": "",
+      "tiktok": ""
     },
     "music": {
       "spotify": "",
-      "apple": "https://music.apple.com/us/curator/recess/1735396284",
+      "apple": "",
       "soundcloud": ""
     },
     "uiTint": "#674263",
@@ -155,7 +155,7 @@
     },
     "transitions": {
       "type": "crossfade",
-      "duration": 3.3
+      "duration": 1.5
     },
     "ripple": {
       "enabled": true,
@@ -190,10 +190,7 @@
   },
   "assets": {
     "splats": [
-      "./assets/main.sog",
-      "./assets/past-1.sog",
-      "./assets/past-2.sog",
-      "./assets/past-3.sog"
+      "./assets/main.sog"
     ],
     "background": null,
     "logo": null

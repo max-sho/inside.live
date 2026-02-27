@@ -60,7 +60,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 .plogo img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* Gyro toggle — right side, below status bar */
-.gyro-btn{position:absolute;top:54px;right:14px;z-index:5;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(var(--uiR),var(--uiG),var(--uiB),.75);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.22);border-radius:50%;cursor:pointer;color:rgba(255,255,255,.7);padding:0;-webkit-appearance:none;opacity:0;animation:fadeC .5s ease 1.5s forwards;transition:background .2s ease,border-color .2s ease,color .2s ease,opacity .4s ease}
+.gyro-btn{position:absolute;top:14px;right:14px;z-index:5;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(var(--uiR),var(--uiG),var(--uiB),.75);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.22);border-radius:50%;cursor:pointer;color:rgba(255,255,255,.7);padding:0;-webkit-appearance:none;opacity:0;animation:fadeC .5s ease .3s forwards;transition:background .2s ease,border-color .2s ease,color .2s ease,opacity .4s ease}
 .gyro-btn:active{transform:scale(.88)}
 .gyro-btn svg{width:16px;height:16px}
 .gyro-btn.active{background:rgba(255,77,0,.15);border-color:rgba(255,77,0,.3);color:var(--accent)}
@@ -68,8 +68,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 @media(hover:hover)and(pointer:fine){.gyro-btn{display:none}}
 @keyframes fadeC{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
 
-/* ── Hero tap zone (triggers cinema mode) ── */
-.hero-tap{position:absolute;inset:0;bottom:35dvh;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* ── Hero tap zone (now pass-through: canvas handles taps + gestures) ── */
+.hero-tap{position:absolute;inset:0;z-index:2;pointer-events:none;-webkit-tap-highlight-color:transparent}
 
 /* ── Content (info mode — default) ── */
 .content{
@@ -333,7 +333,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
       <button class="chip g" id="tcChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="chip-t" id="tcTxt">22:00 – 04:00</span><span class="chip-a">Add</span></button>
       <button class="chip g" id="vcChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="chip-t" id="vcTxt">Venue MOT</span></button>
       <button class="chip sm g" id="mcChip" aria-label="Music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
-      <button class="chip sm g" id="scChip" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+      <button class="chip sm g" id="scChip" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
     </div>
 
     <div class="abt g" id="abt">
@@ -509,6 +509,7 @@ renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 renderer.domElement.style.display = 'block';
 renderer.domElement.style.width = '100%';
 renderer.domElement.style.height = '100%';
+renderer.domElement.style.touchAction = 'none';
 vm.appendChild(renderer.domElement);
 const canvas = renderer.domElement;
 
@@ -648,6 +649,8 @@ filmPass.enabled=false;composer.addPass(filmPass);
 // ═══════════════════════════════════════════════════
 let currentSplat=null, previousSplat=null, viewerPaused=false;
 let transitionActive=false, transitionStart=0, transitionDuration=1.5, transitionType='crossfade';
+// Standalone mode: splat URLs and viewer configs (populated at boot)
+let _standaloneSplats=[], _standaloneViewer=null, _standaloneMemoryViewer=null;
 
 function loadSplat(url, transition){
   const doTransition = transition && currentSplat;
@@ -664,26 +667,42 @@ function loadSplat(url, transition){
         if(previousSplat){scene.remove(previousSplat);previousSplat.dispose();previousSplat=null;}
         previousSplat = currentSplat;
         currentSplat = mesh;
+        // Match transform of outgoing splat so they align during crossfade
+        if(previousSplat){mesh.position.copy(previousSplat.position);mesh.scale.copy(previousSplat.scale);}
         mesh.opacity = 0;
         scene.add(mesh);
         setupDynoModifier(mesh);
         transitionActive = true;
         transitionStart = performance.now()/1000;
+        // Smoothly recenter camera on new splat's bounding box
+        const box=new THREE.Box3().setFromObject(mesh);
+        const worldCenter=new THREE.Vector3();box.getCenter(worldCenter);
+        // Animate target to new center over transition duration
+        const startTarget=target.clone();
+        const recenterId=setInterval(()=>{
+          const t=Math.min((performance.now()/1000-transitionStart)/transitionDuration,1);
+          const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+          target.lerpVectors(startTarget,worldCenter,e);
+          if(t>=1)clearInterval(recenterId);
+        },16);
       } else {
         if(currentSplat){scene.remove(currentSplat);currentSplat.dispose();}
         currentSplat=mesh;scene.add(mesh);
         setupDynoModifier(mesh);
       }
-      const box=new THREE.Box3().setFromObject(mesh);
-      const worldCenter=new THREE.Vector3();box.getCenter(worldCenter);
-      VC.lookX=worldCenter.x;VC.lookY=worldCenter.y;VC.lookZ=worldCenter.z;
-      target.set(worldCenter.x,worldCenter.y,worldCenter.z);
-      fadeSphere.radius=VC.fadeRadius;fadeEdit.position.copy(worldCenter);
-      const dist=worldCenter.length();
-      VC.radius=Math.max(0.5,dist*1.15);baseRadius=VC.radius;
-      VC.focalDist=VC.radius;spark.focalDistance=VC.focalDist;
-      resetOrbit();
-      if(!doTransition) startReveal();
+      // Only recalculate camera for initial load (not crossfade transitions)
+      if(!doTransition){
+        const box=new THREE.Box3().setFromObject(mesh);
+        const worldCenter=new THREE.Vector3();box.getCenter(worldCenter);
+        VC.lookX=worldCenter.x;VC.lookY=worldCenter.y;VC.lookZ=worldCenter.z;
+        target.set(worldCenter.x,worldCenter.y,worldCenter.z);
+        fadeSphere.radius=VC.fadeRadius;fadeEdit.position.copy(worldCenter);
+        const dist=worldCenter.length();
+        VC.radius=Math.max(0.5,dist*1.15);baseRadius=VC.radius;
+        VC.focalDist=VC.radius;spark.focalDistance=VC.focalDist;
+        resetOrbit();
+        startReveal();
+      }
     }
   });
   // Sharp→3dgsconverter pipeline outputs OpenCV coordinates — flip X 180°
@@ -774,12 +793,12 @@ canvas.addEventListener("touchstart",(e)=>{lastInteraction=performance.now()/100
 canvas.addEventListener("touchmove",(e)=>{if(isPinching&&e.touches.length===2){const[a,b]=e.touches;const dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);const scale=dist/touchStartDist;baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,pinchStartRadius/scale));lastInteraction=performance.now()/1000;}
   else if(isDragging&&e.touches.length===1){const t=e.touches[0];const dx=(t.clientX-prevPointerX)/innerWidth;const dy=(t.clientY-prevPointerY)/innerHeight;prevPointerX=t.clientX;prevPointerY=t.clientY;velTheta=-dx*DRAG_SENSITIVITY;velPhi=dy*DRAG_SENSITIVITY*0.6;baseTheta+=velTheta;basePhi+=velPhi;lastInteraction=performance.now()/1000;}
 },{passive:true});
-canvas.addEventListener("touchend",(e)=>{if(e.touches.length<2)isPinching=false;if(e.touches.length===0){isDragging=false;if(pointerDownPos){const ct=e.changedTouches[0];if(ct&&Math.hypot(ct.clientX-pointerDownPos.x,ct.clientY-pointerDownPos.y)<8)spawnRipple(ct.clientX,ct.clientY);pointerDownPos=null;}}},{passive:true});
+canvas.addEventListener("touchend",(e)=>{if(e.touches.length<2)isPinching=false;if(e.touches.length===0){isDragging=false;if(pointerDownPos){const ct=e.changedTouches[0];if(ct&&Math.hypot(ct.clientX-pointerDownPos.x,ct.clientY-pointerDownPos.y)<8){if(mode==='info')enterCinema();else spawnRipple(ct.clientX,ct.clientY);}pointerDownPos=null;}}},{passive:true});
 
 // Mouse (for editor preview)
 canvas.addEventListener("pointerdown",(e)=>{if(e.pointerType==="touch")return;isDragging=true;prevPointerX=e.clientX;prevPointerY=e.clientY;velTheta=0;velPhi=0;lastInteraction=performance.now()/1000;pointerDownPos={x:e.clientX,y:e.clientY};});
 canvas.addEventListener("pointermove",(e)=>{if(e.pointerType==="touch"||!isDragging)return;const dx=(e.clientX-prevPointerX)/innerWidth;const dy=(e.clientY-prevPointerY)/innerHeight;prevPointerX=e.clientX;prevPointerY=e.clientY;velTheta=-dx*DRAG_SENSITIVITY;velPhi=dy*DRAG_SENSITIVITY*0.6;baseTheta+=velTheta;basePhi+=velPhi;lastInteraction=performance.now()/1000;});
-canvas.addEventListener("pointerup",(e)=>{if(e.pointerType==="touch"){if(pointerDownPos&&Math.hypot(e.clientX-pointerDownPos.x,e.clientY-pointerDownPos.y)<8)spawnRipple(e.clientX,e.clientY);pointerDownPos=null;return;}isDragging=false;if(pointerDownPos&&Math.hypot(e.clientX-pointerDownPos.x,e.clientY-pointerDownPos.y)<8)spawnRipple(e.clientX,e.clientY);pointerDownPos=null;});
+canvas.addEventListener("pointerup",(e)=>{if(e.pointerType==="touch"){if(pointerDownPos&&Math.hypot(e.clientX-pointerDownPos.x,e.clientY-pointerDownPos.y)<8){if(mode==='info')enterCinema();else spawnRipple(e.clientX,e.clientY);}pointerDownPos=null;return;}isDragging=false;if(pointerDownPos&&Math.hypot(e.clientX-pointerDownPos.x,e.clientY-pointerDownPos.y)<8){if(mode==='info')enterCinema();else spawnRipple(e.clientX,e.clientY);}pointerDownPos=null;});
 canvas.addEventListener("wheel",(e)=>{if(mode==='info')return;e.preventDefault();baseRadius=Math.max(VC.zoomMin,Math.min(VC.zoomMax,baseRadius+e.deltaY*ZOOM_SENSITIVITY));lastInteraction=performance.now()/1000;},{passive:false});
 
 // Ripple click
@@ -908,6 +927,7 @@ function applyViewerConfig(v){
   if(v.gyroscope){if(v.gyroscope.strength!=null)VC.gyroStrength=v.gyroscope.strength;if(v.gyroscope.maxOffset!=null)VC.gyroMaxOffset=v.gyroscope.maxOffset;if(v.gyroscope.smoothing!=null)VC.gyroSmoothing=v.gyroscope.smoothing;}
   if(v.splatTransform&&currentSplat){if(v.splatTransform.posX!=null)currentSplat.position.x=v.splatTransform.posX;if(v.splatTransform.posY!=null)currentSplat.position.y=v.splatTransform.posY;if(v.splatTransform.posZ!=null)currentSplat.position.z=v.splatTransform.posZ;if(v.splatTransform.scale!=null)currentSplat.scale.setScalar(v.splatTransform.scale);}
   if(v.reveal&&v.reveal.duration!=null)VC.revealDuration=v.reveal.duration;
+  if(v.transitions)VC.transitions=v.transitions;
   applyAllToggles();
 }
 
@@ -1046,12 +1066,24 @@ function enterMemory(idx){
     t.style.transition='none';d.style.transition='none';t.style.opacity='0';d.style.opacity='0';
     _memTitleTimer=setTimeout(()=>{t.textContent=ev.title;d.textContent=ev.date;t.style.transition='opacity .25s ease';d.style.transition='opacity .25s ease';t.style.opacity='1';d.style.opacity='1';updateMemoryNav(past);},50);}
   // Request splat transition from editor (past event index maps to splat index+1)
-  if(isEmbedded)window.parent.postMessage({type:'memory-nav',index:memoryIdx},'*');
+  if(isEmbedded){window.parent.postMessage({type:'memory-nav',index:memoryIdx},'*');
+  }else if(_standaloneSplats.length>0&&_standaloneSplats[memoryIdx+1]){
+    const tConfig={type:VC.transitions?.type||'crossfade',duration:VC.transitions?.duration||1.5};
+    loadSplat(_standaloneSplats[memoryIdx+1],tConfig);
+    // Apply memory-specific viewer settings if available
+    if(_standaloneMemoryViewer)applyViewerConfig(_standaloneMemoryViewer);
+  }
   if(isEmbedded)window.parent.postMessage({type:'mode-changed',mode:'memory'},'*');
 }
 function updateMemoryNav(past){$('cbarPrev').classList.toggle('dim',memoryIdx<=0);$('cbarNext').classList.toggle('dim',memoryIdx>=past.length-1);}
 function exitToInfo(){mode='info';$('page').classList.remove('cinema','memory');$('cbar').classList.remove('on');$('hero').style.transition='';
-  if(isEmbedded){window.parent.postMessage({type:'mode-changed',mode:'info'},'*');window.parent.postMessage({type:'memory-nav',index:-1},'*');}
+  if(isEmbedded){window.parent.postMessage({type:'mode-changed',mode:'info'},'*');window.parent.postMessage({type:'memory-nav',index:-1},'*');
+  }else if(_standaloneSplats.length>0&&_standaloneSplats[0]){
+    const tConfig={type:VC.transitions?.type||'crossfade',duration:VC.transitions?.duration||1.5};
+    loadSplat(_standaloneSplats[0],tConfig);
+    // Restore hero viewer settings
+    if(_standaloneViewer)applyViewerConfig(_standaloneViewer);
+  }
 }
 function toast(id){const t=$(id);if(!t)return;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 
@@ -1068,7 +1100,7 @@ function wire(){
   },{passive:true});
   const inCta=$('cta');
   if(inCta)new IntersectionObserver(([en])=>{if(mode==='info')sticky.classList.toggle('on',!en.isIntersecting);else sticky.classList.remove('on');},{threshold:0,rootMargin:'0px 0px -56px 0px'}).observe(inCta);
-  $('heroTap')?.addEventListener('click',()=>{if(mode==='info')enterCinema();});
+  // Cinema entry handled by canvas tap detection (hero-tap has pointer-events:none)
   // Also handle clicks on the content padding area (above actual cards) — needed because .content z-index sits above .hero-tap
   $('content')?.addEventListener('click',(ev)=>{if(mode!=='info')return;const first=$('content').firstElementChild;if(first&&ev.clientY<first.getBoundingClientRect().top)enterCinema();});
   $('cbar')?.addEventListener('click',ev=>{if(ev.target.closest('.cbar-cta')||ev.target.closest('.cbar-home')||ev.target.closest('.cbar-arr'))return;if(mode==='cinema')exitToInfo();});
@@ -1099,7 +1131,7 @@ function wire(){
   // Gyro toggle (mobile only)
   if(!matchMedia('(hover:hover)and(pointer:fine)').matches){
     const gb=$('gyroBtn');let gyroOn=false,permGranted=false,gyroIdleTimer=null;
-    function resetGyroIdle(){gb.classList.remove('idle');clearTimeout(gyroIdleTimer);if(!gyroOn)gyroIdleTimer=setTimeout(()=>gb.classList.add('idle'),4000);}
+    function resetGyroIdle(){gb.classList.remove('idle');clearTimeout(gyroIdleTimer);if(!gyroOn)gyroIdleTimer=setTimeout(()=>gb.classList.add('idle'),30000);}
     resetGyroIdle();
     const toggle=async()=>{if(gyroOn){window.insideViewer?.disableGyro?.();gyroOn=false;gb.classList.remove('active');resetGyroIdle();return;}
       if(!permGranted&&typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{if((await DeviceOrientationEvent.requestPermission())!=='granted')return;}catch(x){return;}}
@@ -1192,12 +1224,16 @@ renderer.setAnimationLoop(()=>{
   if(currentSplat)currentSplat.updateVersion();
   updateReveal(now);
   updateTransition(now);
+  // Suppress drift & idle during transitions to prevent position jumps
+  const transitionFade = transitionActive ? Math.max(0, 1 - Math.min((now - transitionStart) / (transitionDuration * 0.3), 1)) : 1;
+  // Scale drift by transitionFade
+  if(toggles.drift)fxDrift.value = VC.fxDrift * transitionFade;
   // Ripple
   if(rippleBirthTime>0){const age=now-rippleBirthTime;fxRippleAge.value=age;if(age>4){fxRippleAge.value=-1;fxRippleStr.value=0;rippleBirthTime=-1;}}
   updateDissolve(now);
   // Idle sway
   let idleT=0,idleP=0;const gap=time-lastInteraction;
-  if(!isDragging&&!isPinching&&!gyroEnabled&&toggles.idle&&gap>2){const f=Math.min((gap-2)/1.5,1);idleT=Math.sin(time*VC.idleSpeed)*VC.idleAmp*f;idleP=Math.sin(time*VC.idleSpeed*.7+1.2)*VC.idleAmp*.5*f;}
+  if(!isDragging&&!isPinching&&!gyroEnabled&&toggles.idle&&gap>2){const f=Math.min((gap-2)/1.5,1)*transitionFade;idleT=Math.sin(time*VC.idleSpeed)*VC.idleAmp*f;idleP=Math.sin(time*VC.idleSpeed*.7+1.2)*VC.idleAmp*.5*f;}
   // Momentum
   if(!isDragging){baseTheta+=velTheta;basePhi+=velPhi;velTheta*=DRAG_DAMPING;velPhi*=DRAG_DAMPING;if(Math.abs(velTheta)<.00001)velTheta=0;if(Math.abs(velPhi)<.00001)velPhi=0;}
   const hRad=VC.hLimit*Math.PI/180,vMinRad=VC.vMin*Math.PI/180,vMaxRad=VC.vMax*Math.PI/180;
@@ -1238,23 +1274,26 @@ if(isEmbedded){
     let cfg=null;
     try{const r=await fetch('./config.json');cfg=await r.json();
       if(cfg.event)fill(cfg.event);
-      if(cfg.viewer){
-        // Apply viewer config but preserve inline splatUrl/bgImage if config doesn't have assets
-        const savedSplat=VC.splatUrl, savedBg=VC.bgImage;
-        Object.assign(VC,cfg.viewer);
-        if(!VC.splatUrl)VC.splatUrl=savedSplat;
-        if(!VC.bgImage)VC.bgImage=savedBg;
-        applyAllToggles();
-      }
+      if(cfg.viewer){_standaloneViewer=cfg.viewer;applyViewerConfig(cfg.viewer);}
+      if(cfg.memoryViewer)_standaloneMemoryViewer=cfg.memoryViewer;
     }catch(e){/* Using inline defaults */}
 
-    // Resolve asset paths: config.assets > VC defaults
-    const splatUrl=cfg?.assets?.splats?.[0]||VC.splatUrl;
+    // Resolve asset paths
+    _standaloneSplats=cfg?.assets?.splats||[];
+    const splatUrl=_standaloneSplats[0]||VC.splatUrl;
     const bgUrl=cfg?.assets?.background||VC.bgImage;
 
-    // Load splat
+    // Load hero splat
     if(splatUrl){
-      fetch(splatUrl,{method:"HEAD"}).then(r=>{if(r.ok)loadSplat(splatUrl);}).catch(()=>{});
+      fetch(splatUrl,{method:"HEAD"}).then(r=>{if(r.ok){
+        loadSplat(splatUrl);
+        // Re-apply splatTransform + viewer config after splat loads (needs mesh)
+        const waitForSplat=setInterval(()=>{if(currentSplat){clearInterval(waitForSplat);
+          if(_standaloneViewer)applyViewerConfig(_standaloneViewer);
+          // Preload memory splats into browser cache for instant transitions
+          for(let i=1;i<_standaloneSplats.length;i++){fetch(_standaloneSplats[i]).catch(()=>{});}
+        }},100);
+      }}).catch(()=>{});
     }
     // Load bg image
     if(bgUrl){const img=new Image();img.crossOrigin="anonymous";img.onload=()=>{bgImageEl=img;updateBackground();};img.src=bgUrl;}
