@@ -2,7 +2,7 @@
   "event": {
     "name": "BLOCK PARTY",
     "promoter": "Recess Presents",
-    "promoterLogo": "",
+    "promoterLogo": "./assets/logo.jpg",
     "date": "2026-08-24",
     "time": {
       "start": "13:00",
@@ -35,20 +35,20 @@
       {
         "title": "NYE Special",
         "date": "Dec 31",
-        "image": "",
-        "hasSplat": false
+        "image": "./assets/past/0.jpg",
+        "hasSplat": true
       },
       {
         "title": "Detour x Yam",
         "date": "Nov 23",
-        "image": "",
-        "hasSplat": false
+        "image": "./assets/past/1.jpg",
+        "hasSplat": true
       },
       {
         "title": "Summer Close",
         "date": "Sep 14",
-        "image": "",
-        "hasSplat": false
+        "image": "./assets/past/2.jpg",
+        "hasSplat": true
       }
     ],
     "socials": {
@@ -190,9 +190,12 @@
   },
   "assets": {
     "splats": [
-      "./assets/main.sog"
+      "./assets/main.sog",
+      "./assets/past-1.sog",
+      "./assets/past-2.sog",
+      "./assets/past-3.sog"
     ],
     "background": null,
-    "logo": null
+    "logo": "./assets/logo.jpg"
   }
 }
