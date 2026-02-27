@@ -2,18 +2,18 @@
   "event": {
     "name": "BLOCK PARTY",
     "promoter": "Recess Presents",
-    "promoterLogo": "./assets/logo.jpg",
-    "date": "2026-08-24",
+    "promoterLogo": "",
+    "date": "2026-03-15",
     "time": {
-      "start": "13:00",
-      "end": "22:00"
+      "start": "22:00",
+      "end": "04:00"
     },
     "venue": {
-      "name": "Eutopia Warehouse, Barking",
+      "name": "Eutopia Warehouse",
       "address": "Eutopia Warehouse, Barking"
     },
     "genre": "Afrobeats · Amapiano",
-    "description": "Our last day party in London was August 2024... crazy work still. But carnival wknd is our fave, after Recessland wknd ofc!",
+    "description": "Our last day party in London was August 2024... crazy work still. But carnival wknd is our fave, after Recessland wknd ofc! ",
     "age": "18+",
     "lastEntry": "18:00",
     "ticketUrl": "https://dice.fm/partner/aeg/event/k6r8kl-recess-block-party-24th-aug-eutopia-warehouse-barking-tickets?dice_id=6698997&dice_channel=web&dice_tags=organic&dice_campaign=AEG&dice_feature=mio_marketing&_branch_match_id=1555759854420793091&utm_source=web&utm_campaign=AEG&utm_medium=mio_marketing&_branch_referrer=H4sIAAAAAAAAA8soKSkottLXz8nMy9ZLyUxO1UvL1c83TkqzSDVLNUk0TLavK0pNSy0qysxLj08qyi8vTi2ydc4oys9NBQD2ej6%2BOwAAAA%3D%3D",
@@ -52,17 +52,17 @@
       }
     ],
     "socials": {
-      "instagram": "",
-      "twitter": "",
-      "tiktok": ""
+      "instagram": "https://www.instagram.com/rec.ess/",
+      "twitter": "https://x.com/rec_ess",
+      "tiktok": "tiktok.com/@rec.ess"
     },
     "music": {
       "spotify": "",
-      "apple": "",
+      "apple": "https://music.apple.com/us/curator/recess/1735396284",
       "soundcloud": ""
     },
-    "uiTint": "#674263",
-    "accentColorOverride": "#ff7575",
+    "uiTint": "#5a4870",
+    "accentColorOverride": "#ffffff",
     "ctaColor": null,
     "ctaBorder": null,
     "typography": {
@@ -74,12 +74,12 @@
       "labels": {
         "font": "'Space Mono',monospace",
         "weight": "700",
-        "color": "#f5f5f5"
+        "color": "#bfbfbf"
       },
       "body": {
-        "font": "'Instrument Sans',sans-serif",
+        "font": "'Sora',sans-serif",
         "weight": "400",
-        "color": "#ffffff"
+        "color": "#dedede"
       },
       "buttons": {
         "font": "'Space Mono',monospace",
@@ -91,30 +91,30 @@
   "viewer": {
     "camera": {
       "radius": 2.5,
-      "fov": 48,
+      "fov": 50,
       "height": 0,
-      "hRange": 57,
-      "vMin": 37,
-      "vMax": 135,
+      "hRange": 30,
+      "vMin": 60,
+      "vMax": 100,
       "targetX": 0,
       "targetY": 0,
-      "targetZ": 0.05
+      "targetZ": 0
     },
     "zoom": {
-      "min": 0.3,
-      "max": 7.5
+      "min": 0.5,
+      "max": 6
     },
     "idle": {
       "enabled": true,
-      "speed": 0.1,
-      "amplitude": 0.07
+      "speed": 0.26,
+      "amplitude": 0.025
     },
     "effects": {
       "drift": {
         "enabled": true,
-        "amount": 0.013,
-        "scale": 2,
-        "speed": 0.3,
+        "amount": 0.004,
+        "scale": 1.5,
+        "speed": 0.9,
         "yDamping": 0.6,
         "edgeFade": 0.4
       },
@@ -125,10 +125,10 @@
     },
     "post": {
       "bloom": {
-        "enabled": true,
-        "strength": 0.55,
-        "threshold": 0.6,
-        "streak": 0.4,
+        "enabled": false,
+        "strength": 0.8,
+        "threshold": 0.75,
+        "streak": 0.35,
         "tint": 0.15
       },
       "filmGrade": {
@@ -150,16 +150,16 @@
       "blur": 50,
       "brightness": 0.4,
       "saturation": 1.2,
-      "color": "#92458a",
+      "color": "#705393",
       "colorOverride": true
     },
     "transitions": {
       "type": "crossfade",
-      "duration": 1.5
+      "duration": 3.2
     },
     "ripple": {
       "enabled": true,
-      "strength": 0.08
+      "strength": 0.055
     },
     "dissolve": {
       "enabled": false,
@@ -169,22 +169,122 @@
     },
     "reveal": {
       "type": "spread",
-      "duration": 4.2
+      "duration": 4.7
     },
     "distanceFade": {
       "enabled": false,
-      "radius": 7.5,
-      "softEdge": 3.6
+      "radius": 3,
+      "softEdge": 1.5
     },
     "gyroscope": {
-      "strength": 0.41,
-      "maxOffset": 0.35,
-      "smoothing": 0.19
+      "strength": 0.35,
+      "maxOffset": 0.6,
+      "smoothing": 0.12
     },
     "splatTransform": {
       "posX": 0,
-      "posY": 0.05,
-      "posZ": -0.05,
+      "posY": 0,
+      "posZ": 0,
+      "scale": 1
+    }
+  },
+  "memoryViewer": {
+    "camera": {
+      "radius": 2.5,
+      "fov": 50,
+      "height": 0,
+      "hRange": 38,
+      "vMin": 30,
+      "vMax": 91,
+      "targetX": 0,
+      "targetY": 0,
+      "targetZ": 0
+    },
+    "zoom": {
+      "min": 0.5,
+      "max": 6
+    },
+    "idle": {
+      "enabled": true,
+      "speed": 0.08,
+      "amplitude": 0.03
+    },
+    "effects": {
+      "drift": {
+        "enabled": true,
+        "amount": 0.017,
+        "scale": 1.5,
+        "speed": 0.3,
+        "yDamping": 0.15,
+        "edgeFade": 0.7
+      },
+      "warmth": {
+        "enabled": false,
+        "tint": 0.08
+      }
+    },
+    "post": {
+      "bloom": {
+        "enabled": true,
+        "strength": 0.8,
+        "threshold": 0.6,
+        "streak": 0.05,
+        "tint": 0.15
+      },
+      "filmGrade": {
+        "enabled": false,
+        "exposure": 0,
+        "vignette": 0.6,
+        "chroma": 0.003,
+        "grain": 0.04,
+        "tint": 0,
+        "fade": 0
+      },
+      "dof": {
+        "enabled": false,
+        "aperture": 0.003,
+        "blur": 0.08
+      }
+    },
+    "background": {
+      "blur": 50,
+      "brightness": 0.4,
+      "saturation": 1.2,
+      "color": "#705393",
+      "colorOverride": true
+    },
+    "transitions": {
+      "type": "crossfade",
+      "duration": 4.5
+    },
+    "ripple": {
+      "enabled": true,
+      "strength": 0.055
+    },
+    "dissolve": {
+      "enabled": false,
+      "noiseScale": 3,
+      "lift": 0.5,
+      "spread": 1
+    },
+    "reveal": {
+      "type": "spread",
+      "duration": 4.7
+    },
+    "distanceFade": {
+      "enabled": false,
+      "radius": 3,
+      "softEdge": 1.5
+    },
+    "gyroscope": {
+      "strength": 0.35,
+      "maxOffset": 0.6,
+      "smoothing": 0.12
+    },
+    "splatTransform": {
+      "posX": 0,
+      "posY": 0,
+      "posZ": 0.15,
       "scale": 1
     }
   },
@@ -196,6 +296,6 @@
       "./assets/past-3.sog"
     ],
     "background": null,
-    "logo": "./assets/logo.jpg"
+    "logo": null
   }
 }
