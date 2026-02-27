@@ -660,7 +660,8 @@ function loadSplat(url, transition){
     maxScreenSpaceSplatSize: 64,
     onLoad: (m) => {
       if(doTransition){
-        // Transition: keep old splat, add new one, crossfade
+        // Clean up any in-progress transition to prevent splat leak
+        if(previousSplat){scene.remove(previousSplat);previousSplat.dispose();previousSplat=null;}
         previousSplat = currentSplat;
         currentSplat = mesh;
         mesh.opacity = 0;
@@ -1036,12 +1037,13 @@ function enterCinema(){if(mode==='cinema')return;mode='cinema';$('sticky').class
   setTimeout(()=>{$('page').classList.remove('memory');$('page').classList.add('cinema');$('cbar').dataset.mode='cinema';$('cbar').classList.add('on');$('cbarLabel').textContent=EC?.promoter||'';$('cbarTitle').textContent=EC?.name||'';$('hero').style.opacity='1';$('hero').style.transition='opacity .4s ease';window.insideViewer?.resume?.();},200);
   if(isEmbedded)window.parent.postMessage({type:'mode-changed',mode:'cinema'},'*');
 }
+let _memTitleTimer=null;
 function enterMemory(idx){
   const past=getPastEvents();if(!past.length)return;memoryIdx=Math.max(0,Math.min(idx,past.length-1));const ev=past[memoryIdx];
   if(mode!=='memory'){mode='memory';$('sticky').classList.remove('on');window.scrollTo({top:0,behavior:'smooth'});
     setTimeout(()=>{$('page').classList.remove('cinema');$('page').classList.add('memory');$('cbar').dataset.mode='memory';$('cbarLabel').textContent=EC?.promoter||'';$('cbarTitle').textContent=ev.title;$('cbarDate').textContent=ev.date;$('cbar').classList.add('on');updateMemoryNav(past);$('hero').style.opacity='1';$('hero').style.transition='opacity .4s ease';window.insideViewer?.resume?.();},200);
-  }else{const t=$('cbarTitle'),d=$('cbarDate');t.classList.add('fade');d.style.opacity='0';d.style.transition='opacity .25s ease';
-    setTimeout(()=>{t.textContent=ev.title;d.textContent=ev.date;t.classList.remove('fade');d.style.opacity='1';updateMemoryNav(past);},250);}
+  }else{clearTimeout(_memTitleTimer);const t=$('cbarTitle'),d=$('cbarDate');t.classList.add('fade');d.style.opacity='0';d.style.transition='opacity .25s ease';
+    _memTitleTimer=setTimeout(()=>{t.textContent=ev.title;d.textContent=ev.date;t.classList.remove('fade');d.style.opacity='1';updateMemoryNav(past);},250);}
   // Request splat transition from editor (past event index maps to splat index+1)
   if(isEmbedded)window.parent.postMessage({type:'memory-nav',index:memoryIdx},'*');
   if(isEmbedded)window.parent.postMessage({type:'mode-changed',mode:'memory'},'*');
