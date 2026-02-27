@@ -958,14 +958,13 @@ const origPushConfig=pushConfig,origPushEventData=pushEventData;
 pushConfig=function(){origPushConfig();clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(autoSaveProject,2000);};
 pushEventData=function(){origPushEventData();clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(autoSaveProject,2000);};
 
-// ═══ DEPLOY — Vercel API ═══
-const VERCEL_TOKEN_KEY='inside-vercel-token';
-const VERCEL_TEAM_KEY='inside-vercel-team';
+// ═══ DEPLOY — GitHub API → Vercel auto-deploy ═══
 
 $('deployBtn').addEventListener('click',async()=>{
   if(!currentProject){alert('Save to a project first');return;}
-  let token=localStorage.getItem(VERCEL_TOKEN_KEY);
-  if(!token){token=prompt('Vercel API Token (from vercel.com/account/tokens):');if(!token)return;localStorage.setItem(VERCEL_TOKEN_KEY,token);}
+  const GITHUB_TOKEN_KEY='inside-github-token';
+  let ghToken=localStorage.getItem(GITHUB_TOKEN_KEY);
+  if(!ghToken){ghToken=prompt('GitHub Personal Access Token (github.com/settings/tokens → repo scope):');if(!ghToken)return;localStorage.setItem(GITHUB_TOKEN_KEY,ghToken);}
   const btn=$('deployBtn');btn.textContent='Deploying…';btn.classList.add('deploying');
   try{
     // Build files in memory (same as export)
@@ -1012,12 +1011,6 @@ $('deployBtn').addEventListener('click',async()=>{
 
     btn.textContent='Uploading…';
 
-    // Vercel Deploy API — file-based deployment
-    // Note: Vercel deploy API has file size limits, so we use Git push approach instead
-    // For large .sog files, we'll use the GitHub Contents API to push to the repo
-    const GITHUB_TOKEN_KEY='inside-github-token';
-    let ghToken=localStorage.getItem(GITHUB_TOKEN_KEY);
-    if(!ghToken){ghToken=prompt('GitHub Personal Access Token (needs repo scope):');if(!ghToken){btn.textContent='Deploy ▲';btn.classList.remove('deploying');return;}localStorage.setItem(GITHUB_TOKEN_KEY,ghToken);}
     const REPO='max-sho/inside.live';
     const branch='main';
 
