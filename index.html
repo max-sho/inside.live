@@ -48,7 +48,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 .page::after{content:'';position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat;background-size:180px;mix-blend-mode:overlay}
 
 /* ── Hero ── */
-.hero{position:fixed;top:calc(-1 * env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:calc(100dvh + env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px));overflow:hidden;z-index:0;will-change:opacity;background-color:#000}
+.hero{position:fixed;top:calc(-1 * env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:calc(100dvh + env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px));overflow:hidden;z-index:0;will-change:opacity;background-color:var(--bg)}
 .glow{position:absolute;inset:-40%;filter:blur(60px);z-index:0;pointer-events:none;animation:pulse 8s ease-in-out infinite alternate}
 @keyframes pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:1;transform:scale(1.05)}}
 #vm{position:absolute;inset:0;z-index:1}
@@ -60,11 +60,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 .plogo img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* Gyro toggle — right side, below status bar */
-.gyro-btn{position:absolute;top:14px;right:14px;z-index:5;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(var(--uiR),var(--uiG),var(--uiB),.75);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.22);border-radius:50%;cursor:pointer;color:rgba(255,255,255,.7);padding:0;-webkit-appearance:none;opacity:0;animation:fadeC .5s ease .3s forwards;transition:background .2s ease,border-color .2s ease,color .2s ease,opacity .4s ease}
+.gyro-btn{position:absolute;top:14px;right:14px;z-index:5;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(var(--uiR),var(--uiG),var(--uiB),.75);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.22);border-radius:50%;cursor:pointer;color:rgba(255,255,255,.7);padding:0;-webkit-appearance:none;opacity:0;animation:fadeGyro .5s ease .3s forwards;transition:background .2s ease,border-color .2s ease,color .2s ease,opacity .4s ease}
 .gyro-btn:active{transform:scale(.88)}
 .gyro-btn svg{width:16px;height:16px}
-.gyro-btn.active{background:rgba(255,77,0,.15);border-color:rgba(255,77,0,.3);color:var(--accent)}
-.gyro-btn.idle{opacity:0!important;pointer-events:none}
+.gyro-btn.active{background:rgba(255,77,0,.15);border-color:rgba(255,77,0,.3);color:var(--accent);opacity:1!important}
+@keyframes fadeGyro{from{opacity:0}to{opacity:.4}}
 @media(hover:hover)and(pointer:fine){.gyro-btn{display:none}}
 @keyframes fadeC{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
 
@@ -273,7 +273,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 /* ── Sheets ── */
 .shov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .shov.on{opacity:1;pointer-events:auto}
-.sh{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:430px;z-index:101;background:rgba(28,28,30,.88);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:20px 20px 0 0;padding:12px 18px 28px;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.sh{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:430px;z-index:101;background:rgba(var(--uiR),var(--uiG),var(--uiB),.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:20px 20px 0 0;padding:12px 18px 28px;transition:transform .4s cubic-bezier(.16,1,.3,1)}
 .sh.on{transform:translateX(-50%) translateY(0)}
 .sh-bar{width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 12px}
 .sh-t{font-family:var(--lf);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
@@ -1112,7 +1112,7 @@ function wire(){
     if(mode==='cinema'&&y>10&&!cinemaScrollGuard){cinemaScrollGuard=true;exitToInfo();setTimeout(()=>cinemaScrollGuard=false,600);}
   },{passive:true});
   const inCta=$('cta');
-  if(inCta)new IntersectionObserver(([en])=>{if(mode==='info')sticky.classList.toggle('on',!en.isIntersecting);else sticky.classList.remove('on');},{threshold:0,rootMargin:'0px 0px -56px 0px'}).observe(inCta);
+  if(inCta)new IntersectionObserver(([en])=>{if(mode==='info')sticky.classList.toggle('on',!en.isIntersecting);else sticky.classList.remove('on');},{threshold:0.5,rootMargin:'0px 0px -100px 0px'}).observe(inCta);
   // Cinema entry handled by canvas tap detection (hero-tap has pointer-events:none)
   // Also handle clicks on the content padding area (above actual cards) — needed because .content z-index sits above .hero-tap
   $('content')?.addEventListener('click',(ev)=>{if(mode!=='info')return;const first=$('content').firstElementChild;if(first&&ev.clientY<first.getBoundingClientRect().top)enterCinema();});
@@ -1144,11 +1144,11 @@ function wire(){
   // Gyro toggle (mobile only)
   if(!matchMedia('(hover:hover)and(pointer:fine)').matches){
     const gb=$('gyroBtn');let gyroOn=false,permGranted=false,gyroIdleTimer=null;
-    function resetGyroIdle(){gb.classList.remove('idle');clearTimeout(gyroIdleTimer);if(!gyroOn)gyroIdleTimer=setTimeout(()=>gb.classList.add('idle'),30000);}
+    function resetGyroIdle(){}
     resetGyroIdle();
     const toggle=async()=>{if(gyroOn){window.insideViewer?.disableGyro?.();gyroOn=false;gb.classList.remove('active');resetGyroIdle();return;}
       if(!permGranted&&typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{if((await DeviceOrientationEvent.requestPermission())!=='granted')return;}catch(x){return;}}
-      permGranted=true;window.insideViewer?.enableGyro?.();gyroOn=true;gb.classList.add('active');clearTimeout(gyroIdleTimer);gb.classList.remove('idle');};
+      permGranted=true;window.insideViewer?.enableGyro?.();gyroOn=true;gb.classList.add('active');};
     if(gb)gb.onclick=toggle;
   }
 }
@@ -1298,15 +1298,13 @@ if(isEmbedded){
 
     // Load hero splat
     if(splatUrl){
-      fetch(splatUrl,{method:"HEAD"}).then(r=>{if(r.ok){
-        loadSplat(splatUrl);
-        // Re-apply splatTransform + viewer config after splat loads (needs mesh)
-        const waitForSplat=setInterval(()=>{if(currentSplat){clearInterval(waitForSplat);
-          if(_standaloneViewer)applyViewerConfig(_standaloneViewer);
-          // Preload memory splats into browser cache for instant transitions
-          for(let i=1;i<_standaloneSplats.length;i++){fetch(_standaloneSplats[i]).catch(()=>{});}
-        }},100);
-      }}).catch(()=>{});
+      loadSplat(splatUrl);
+      // Re-apply splatTransform + viewer config after splat loads (needs mesh)
+      const waitForSplat=setInterval(()=>{if(currentSplat){clearInterval(waitForSplat);
+        if(_standaloneViewer)applyViewerConfig(_standaloneViewer);
+        // Preload memory splats into browser cache for instant transitions
+        for(let i=1;i<_standaloneSplats.length;i++){fetch(_standaloneSplats[i]).catch(()=>{});}
+      }},100);
     }
     // Load bg image
     if(bgUrl){const img=new Image();img.crossOrigin="anonymous";img.onload=()=>{bgImageEl=img;updateBackground();};img.src=bgUrl;}
