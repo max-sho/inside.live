@@ -1,0 +1,201 @@
+{
+  "event": {
+    "name": "BLOCK PARTY",
+    "promoter": "Recess Presents",
+    "promoterLogo": "",
+    "date": "2026-08-24",
+    "time": {
+      "start": "13:00",
+      "end": "22:00"
+    },
+    "venue": {
+      "name": "Eutopia Warehouse, Barking",
+      "address": "Eutopia Warehouse, Barking"
+    },
+    "genre": "Afrobeats · Amapiano",
+    "description": "Our last day party in London was August 2024... crazy work still. But carnival wknd is our fave, after Recessland wknd ofc!",
+    "age": "18+",
+    "lastEntry": "18:00",
+    "ticketUrl": "https://dice.fm/partner/aeg/event/k6r8kl-recess-block-party-24th-aug-eutopia-warehouse-barking-tickets?dice_id=6698997&dice_channel=web&dice_tags=organic&dice_campaign=AEG&dice_feature=mio_marketing&_branch_match_id=1555759854420793091&utm_source=web&utm_campaign=AEG&utm_medium=mio_marketing&_branch_referrer=H4sIAAAAAAAAA8soKSkottLXz8nMy9ZLyUxO1UvL1c83TkqzSDVLNUk0TLavK0pNSy0qysxLj08qyi8vTi2ydc4oys9NBQD2ej6%2BOwAAAA%3D%3D",
+    "lineup": [
+      {
+        "name": "DJ Jojo",
+        "headliner": true
+      },
+      {
+        "name": "Sef Kombo",
+        "headliner": true
+      },
+      {
+        "name": "Kxngs",
+        "headliner": false
+      }
+    ],
+    "pastEvents": [
+      {
+        "title": "NYE Special",
+        "date": "Dec 31",
+        "image": "./assets/past/0.jpg",
+        "hasSplat": true
+      },
+      {
+        "title": "Detour x Yam",
+        "date": "Nov 23",
+        "image": "./assets/past/1.jpg",
+        "hasSplat": true
+      },
+      {
+        "title": "Summer Close",
+        "date": "Sep 14",
+        "image": "./assets/past/2.jpg",
+        "hasSplat": true
+      }
+    ],
+    "socials": {
+      "instagram": "https://www.instagram.com/rec.ess/",
+      "twitter": "https://x.com/rec_ess",
+      "tiktok": "https://www.tiktok.com/@rec.ess"
+    },
+    "music": {
+      "spotify": "",
+      "apple": "https://music.apple.com/us/curator/recess/1735396284",
+      "soundcloud": ""
+    },
+    "uiTint": "#674263",
+    "accentColorOverride": "#ff7575",
+    "ctaColor": null,
+    "ctaBorder": null,
+    "typography": {
+      "title": {
+        "font": "'Instrument Sans',sans-serif",
+        "weight": "700",
+        "color": "#f5f5f3"
+      },
+      "labels": {
+        "font": "'Space Mono',monospace",
+        "weight": "700",
+        "color": "#f5f5f5"
+      },
+      "body": {
+        "font": "'Instrument Sans',sans-serif",
+        "weight": "400",
+        "color": "#ffffff"
+      },
+      "buttons": {
+        "font": "'Space Mono',monospace",
+        "weight": "700",
+        "color": "#ffffff"
+      }
+    }
+  },
+  "viewer": {
+    "camera": {
+      "radius": 2.5,
+      "fov": 48,
+      "height": 0,
+      "hRange": 57,
+      "vMin": 37,
+      "vMax": 135,
+      "targetX": 0,
+      "targetY": 0,
+      "targetZ": 0.05
+    },
+    "zoom": {
+      "min": 0.3,
+      "max": 7.5
+    },
+    "idle": {
+      "enabled": true,
+      "speed": 0.1,
+      "amplitude": 0.07
+    },
+    "effects": {
+      "drift": {
+        "enabled": true,
+        "amount": 0.013,
+        "scale": 2,
+        "speed": 0.3,
+        "yDamping": 0.6,
+        "edgeFade": 0.4
+      },
+      "warmth": {
+        "enabled": false,
+        "tint": 0.08
+      }
+    },
+    "post": {
+      "bloom": {
+        "enabled": true,
+        "strength": 0.55,
+        "threshold": 0.6,
+        "streak": 0.4,
+        "tint": 0.15
+      },
+      "filmGrade": {
+        "enabled": false,
+        "exposure": 0,
+        "vignette": 0.6,
+        "chroma": 0.003,
+        "grain": 0.04,
+        "tint": 0,
+        "fade": 0
+      },
+      "dof": {
+        "enabled": false,
+        "aperture": 0.003,
+        "blur": 0.08
+      }
+    },
+    "background": {
+      "blur": 50,
+      "brightness": 0.4,
+      "saturation": 1.2,
+      "color": "#92458a",
+      "colorOverride": true
+    },
+    "transitions": {
+      "type": "crossfade",
+      "duration": 3.3
+    },
+    "ripple": {
+      "enabled": true,
+      "strength": 0.08
+    },
+    "dissolve": {
+      "enabled": false,
+      "noiseScale": 3,
+      "lift": 0.5,
+      "spread": 1
+    },
+    "reveal": {
+      "type": "spread",
+      "duration": 4.2
+    },
+    "distanceFade": {
+      "enabled": false,
+      "radius": 7.5,
+      "softEdge": 3.6
+    },
+    "gyroscope": {
+      "strength": 0.41,
+      "maxOffset": 0.35,
+      "smoothing": 0.19
+    },
+    "splatTransform": {
+      "posX": 0,
+      "posY": 0.05,
+      "posZ": -0.05,
+      "scale": 1
+    }
+  },
+  "assets": {
+    "splats": [
+      "./assets/main.sog",
+      "./assets/past-1.sog",
+      "./assets/past-2.sog",
+      "./assets/past-3.sog"
+    ],
+    "background": null,
+    "logo": null
+  }
+}
